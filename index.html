@@ -955,30 +955,31 @@
     </div>
     <div class="modal-body">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Patient Ka Naam</label><input class="form-input" placeholder="Pura naam likhein"></div>
-        <div class="form-group"><label class="form-label">Mobile Number</label><input class="form-input" placeholder="+91 XXXXX XXXXX"></div>
+        <div class="form-group"><label class="form-label">Patient Ka Naam</label><input id="apptPatientName" class="form-input" placeholder="Pura naam likhein"></div>
+        <div class="form-group"><label class="form-label">Mobile Number</label><input id="apptPatientPhone" class="form-input" placeholder="+91 XXXXX XXXXX" type="tel"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Doctor</label>
-          <select class="form-select"><option>Dr. Anjali Mehta (Cardiology)</option><option>Dr. Suresh Kumar (Orthopedics)</option><option>Dr. Pooja Sharma (Gynecology)</option><option>Dr. Vikram Singh (Neurology)</option><option>Dr. Priya Das (Pediatrics)</option></select>
+          <select id="apptDoctor" class="form-select"><option>Dr. Anjali Mehta (Cardiology)</option><option>Dr. Suresh Kumar (Orthopedics)</option><option>Dr. Pooja Sharma (Gynecology)</option><option>Dr. Vikram Singh (Neurology)</option><option>Dr. Priya Das (Pediatrics)</option></select>
         </div>
         <div class="form-group"><label class="form-label">Department</label>
-          <select class="form-select"><option>Cardiology</option><option>Orthopedics</option><option>Gynecology</option><option>Neurology</option><option>Pediatrics</option><option>General</option></select>
+          <select id="apptDepartment" class="form-select"><option>Cardiology</option><option>Orthopedics</option><option>Gynecology</option><option>Neurology</option><option>Pediatrics</option><option>General</option></select>
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date"></div>
+        <div class="form-group"><label class="form-label">Date</label><input id="apptDate" class="form-input" type="date"></div>
         <div class="form-group"><label class="form-label">Time Slot</label>
-          <select class="form-select"><option>09:00 AM</option><option>09:30 AM</option><option>10:00 AM</option><option>10:30 AM</option><option>11:00 AM</option><option>02:00 PM</option><option>03:00 PM</option><option>04:00 PM</option></select>
+          <select id="apptTime" class="form-select"><option>09:00 AM</option><option>09:30 AM</option><option>10:00 AM</option><option>10:30 AM</option><option>11:00 AM</option><option>02:00 PM</option><option>03:00 PM</option><option>04:00 PM</option></select>
         </div>
       </div>
       <div class="form-group"><label class="form-label">Appointment Type</label>
-        <select class="form-select"><option>OPD Visit</option><option>Follow-up</option><option>Emergency</option><option>Video Consultation</option></select>
+        <select id="apptType" class="form-select"><option>OPD Visit</option><option>Follow-up</option><option>Emergency</option><option>Video Consultation</option></select>
       </div>
-      <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-textarea" placeholder="Symptoms ya koi zaruri info..."></textarea></div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
+      <div class="form-group"><label class="form-label">Notes (optional)</label><textarea id="apptNotes" class="form-textarea" placeholder="Symptoms ya koi zaruri info..."></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="closeModal('apptModal')">Cancel</button>
-        <button class="btn btn-primary" onclick="bookAppointment()">✅ Book + WhatsApp Confirm</button>
+        <button class="btn btn-primary" onclick="bookAppointment()">✅ Book Appointment</button>
+        <button class="btn btn-ghost" id="whatsappDemoBtn" onclick="sendWhatsAppDemo()">💬 WhatsApp Confirm (Demo)</button>
       </div>
     </div>
   </div>
@@ -1744,18 +1745,221 @@ function showToast(msg, type = 'info') {
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100px)'; toast.style.transition = '0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
 
+let lastBookedAppointment = null;
+
 function openNewAppointment() {
   document.getElementById('apptModal').classList.add('open');
+
+  // Demo-friendly default date: today
+  const dateInput = document.getElementById('apptDate');
+  if (dateInput && !dateInput.value) {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 10);
+    dateInput.value = localDate;
+  }
+
+  const waBtn = document.getElementById('whatsappDemoBtn');
+  if (waBtn) waBtn.disabled = !lastBookedAppointment;
 }
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
 
-function bookAppointment() {
-  closeModal('apptModal');
-  showToast('Appointment book ho gaya! WhatsApp confirmation bheja ja raha hai...', 'success');
+function normalizePhone(phone) {
+  return String(phone || '').replace(/\D/g, '');
 }
+
+function parseTime12Hour(timeText) {
+  const match = String(timeText || '').trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return null;
+
+  let hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const meridiem = match[3].toUpperCase();
+
+  if (hour < 1 || hour > 12 || minute < 0 || minute > 59) return null;
+  if (meridiem === 'AM' && hour === 12) hour = 0;
+  if (meridiem === 'PM' && hour !== 12) hour += 12;
+
+  return { hour, minute };
+}
+
+async function bookAppointment() {
+  const name = document.getElementById('apptPatientName')?.value.trim();
+  const rawPhone = document.getElementById('apptPatientPhone')?.value.trim();
+  const phone = normalizePhone(rawPhone);
+  const doctorLabel = document.getElementById('apptDoctor')?.value || '';
+  const date = document.getElementById('apptDate')?.value;
+  const timeText = document.getElementById('apptTime')?.value;
+  const type = document.getElementById('apptType')?.value || 'OPD Visit';
+  const notes = document.getElementById('apptNotes')?.value.trim() || '';
+
+  if (!name) {
+    showToast('Patient ka naam enter karo.', 'error');
+    return;
+  }
+
+  if (phone.length < 10) {
+    showToast('Valid mobile number enter karo.', 'error');
+    return;
+  }
+
+  if (!date || !timeText) {
+    showToast('Date aur time slot select karo.', 'error');
+    return;
+  }
+
+  const time = parseTime12Hour(timeText);
+  if (!time) {
+    showToast('Time slot invalid hai.', 'error');
+    return;
+  }
+
+  if (!window.supabaseClient) {
+    showToast('Supabase client initialize nahi hua.', 'error');
+    return;
+  }
+
+  const originalButton = document.querySelector('#apptModal button[onclick="bookAppointment()"]');
+  if (originalButton) {
+    originalButton.disabled = true;
+    originalButton.textContent = '⏳ Booking...';
+  }
+
+  try {
+    // Find selected doctor in the real Supabase doctors table.
+    const doctorName = doctorLabel.replace(/\s*\(.+\)\s*$/, '').trim();
+    const { data: doctors, error: doctorError } = await supabaseClient
+      .from('doctors')
+      .select('id, name, department, specialty')
+      .ilike('name', doctorName);
+
+    if (doctorError) throw new Error(`Doctor lookup failed: ${doctorError.message}`);
+    const doctor = doctors?.[0];
+
+    if (!doctor) {
+      throw new Error(`Doctor "${doctorName}" Supabase doctors table mein nahi mila.`);
+    }
+
+    // Convert the selected local date/time into an ISO timestamp.
+    const [year, month, day] = date.split('-').map(Number);
+    const slotDate = new Date(year, month - 1, day, time.hour, time.minute, 0, 0);
+
+    if (Number.isNaN(slotDate.getTime())) {
+      throw new Error('Appointment date/time invalid hai.');
+    }
+
+    const slotTimeIso = slotDate.toISOString();
+
+    // Prevent accidental double-booking for the same doctor + slot.
+    const { data: existingAppointments, error: existingError } = await supabaseClient
+      .from('appointments')
+      .select('id, status')
+      .eq('doctor_id', doctor.id)
+      .eq('slot_time', slotTimeIso)
+      .in('status', ['booked', 'confirmed', 'reschedule_pending']);
+
+    if (existingError) throw new Error(`Slot check failed: ${existingError.message}`);
+
+    if (existingAppointments?.length) {
+      throw new Error('Ye doctor + time slot already booked hai. Dusra slot select karo.');
+    }
+
+    // Reuse an existing patient by phone; otherwise create a new patient.
+    const { data: existingPatients, error: patientLookupError } = await supabaseClient
+      .from('patients')
+      .select('id, name, phone')
+      .eq('phone', rawPhone);
+
+    if (patientLookupError) throw new Error(`Patient lookup failed: ${patientLookupError.message}`);
+
+    let patient = existingPatients?.[0] || null;
+
+    if (!patient) {
+      const { data: newPatients, error: patientInsertError } = await supabaseClient
+        .from('patients')
+        .insert({ name, phone: rawPhone })
+        .select('id, name, phone')
+        .single();
+
+      if (patientInsertError) {
+        throw new Error(`Patient create failed: ${patientInsertError.message}`);
+      }
+
+      patient = newPatients;
+    }
+
+    // REAL DATABASE INSERT — this is the part that was missing before.
+    const { data: appointment, error: appointmentError } = await supabaseClient
+      .from('appointments')
+      .insert({
+        patient_id: patient.id,
+        doctor_id: doctor.id,
+        slot_time: slotTimeIso,
+        status: 'booked',
+        reason: `${type}${notes ? ` — ${notes}` : ''}`
+      })
+      .select('id, patient_id, doctor_id, slot_time, status, reason')
+      .single();
+
+    if (appointmentError) {
+      throw new Error(`Appointment insert failed: ${appointmentError.message}`);
+    }
+
+    lastBookedAppointment = {
+      id: appointment.id,
+      patientName: patient.name || name,
+      phone: patient.phone || rawPhone,
+      doctorName: doctor.name,
+      slotTime: slotTimeIso,
+      type
+    };
+
+    const waBtn = document.getElementById('whatsappDemoBtn');
+    if (waBtn) waBtn.disabled = false;
+
+    showToast(`✅ Appointment saved in Supabase — ${String(appointment.id).slice(0, 8)}`, 'success');
+
+    // Refresh both live appointment views from Supabase.
+    await renderDashAppts();
+    await renderAppointments();
+
+  } catch (error) {
+    console.error('BOOK APPOINTMENT ERROR:', error);
+    showToast(error?.message || 'Appointment booking failed.', 'error');
+  } finally {
+    if (originalButton) {
+      originalButton.disabled = false;
+      originalButton.textContent = '✅ Book Appointment';
+    }
+  }
+}
+
+function sendWhatsAppDemo() {
+  if (!lastBookedAppointment) {
+    showToast('Pehle appointment book karo. WhatsApp confirmation alag step hai.', 'info');
+    return;
+  }
+
+  const a = lastBookedAppointment;
+  const when = new Date(a.slotTime).toLocaleString('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+
+  showToast(`💬 DEMO: WhatsApp confirmation ready for ${a.patientName} • ${when}`, 'success');
+  console.log('WhatsApp DEMO (Meta not connected):', {
+    appointmentId: a.id,
+    patient: a.patientName,
+    phone: a.phone,
+    doctor: a.doctorName,
+    slot: a.slotTime
+  });
+}
+
 
 function openAddPatient() {
   showToast('Patient registration form khul raha hai...', 'info');
