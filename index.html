@@ -462,7 +462,7 @@
   </div>
 
   <div class="sidebar-footer">
-    <div class="user-info" onclick="showToast('Profile settings khul rahe hain...', 'info')">
+    <div class="user-info" onclick="showToast('Opening profile settings...', 'info')">
       <div class="avatar">DR</div>
       <div>
         <div class="user-name">Dr. Rajesh Gupta</div>
@@ -481,7 +481,7 @@
     <div class="topbar-date" id="topbar-date"></div>
     <div class="search-box">
       <span>🔍</span>
-      <input type="text" placeholder="Patient search karo..." id="globalSearch" oninput="handleSearch(this.value)">
+      <input type="text" placeholder="Search patients..." id="globalSearch" oninput="handleSearch(this.value)">
     </div>
     <div class="notif-btn" onclick="showNotifications()">
       🔔
@@ -498,10 +498,10 @@
       <div class="page-header">
         <div>
           <div class="page-h1">Good Morning, Dr. Muskan Gupta 👋</div>
-          <div class="page-sub">Aaj ka overview — Monday, 17 August 2026</div>
+          <div class="page-sub">Today's overview — Monday, 17 August 2026</div>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="showToast('Report download ho raha hai...', 'info')">📥 Export</button>
+          <button class="btn btn-ghost" onclick="showToast('Downloading report...', 'info')">📥 Export</button>
           <button class="btn btn-ghost" onclick="refreshDashboard()">🔄 Refresh</button>
         </div>
       </div>
@@ -555,8 +555,8 @@
         <!-- Recent Appointments Table -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">📋 Aaj ke Appointments</div>
-            <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="navigate('appointments', null)">Sab dekho →</button>
+            <div class="card-title">📋 Today's Appointments</div>
+            <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="navigate('appointments', null)">View All →</button>
           </div>
           <div class="table-wrap">
             <table>
@@ -622,7 +622,7 @@
 
         <!-- Weekly Chart -->
         <div class="card">
-          <div class="card-header"><div class="card-title">📈 Is Hafte ka Volume</div></div>
+          <div class="card-header"><div class="card-title">📈 This Week's Volume</div></div>
           <div class="card-body">
             <div style="display:flex;align-items:flex-end;gap:12px;height:100px;padding:0 8px">
               <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
@@ -668,7 +668,7 @@
       <div class="page-header">
         <div>
           <div class="page-h1">📅 Appointments</div>
-          <div class="page-sub">Saare appointments manage karo — book, reschedule, cancel</div>
+          <div class="page-sub">Manage all appointments — book, reschedule, and cancel</div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="filterAppointments()">🔽 Filter</button>
@@ -677,7 +677,7 @@
       </div>
 
       <div class="tabs">
-        <div class="tab active" onclick="filterApptTab(this, 'all')">Sab (38)</div>
+        <div class="tab active" onclick="filterApptTab(this, 'all')">All (38)</div>
         <div class="tab" onclick="filterApptTab(this, 'confirmed')">Confirmed (18)</div>
         <div class="tab" onclick="filterApptTab(this, 'pending')">Pending (8)</div>
         <div class="tab" onclick="filterApptTab(this, 'completed')">Completed (8)</div>
@@ -689,7 +689,7 @@
           <div class="card-title">📋 Appointment List</div>
           <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:12px;color:var(--text-muted)">17 Aug 2026</span>
-            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="showToast('Export ho raha hai...', 'success')">📥 CSV</button>
+            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="showToast('Exporting...', 'success')">📥 CSV</button>
           </div>
         </div>
         <div class="table-wrap">
@@ -841,7 +841,7 @@
           <div class="page-h1">📈 Analytics</div>
           <div class="page-sub">Hospital performance — AI automation impact</div>
         </div>
-        <select class="form-select" style="width:160px" onchange="showToast('Date range update ho raha hai...','info')">
+        <select class="form-select" style="width:160px" onchange="showToast('Updating date range...','info')">
           <option>Last 7 days</option>
           <option>Last 30 days</option>
           <option>Last 3 months</option>
@@ -874,7 +874,7 @@
           <div class="page-h1">⚡ Automation Logs</div>
           <div class="page-sub">n8n workflow execution log — all 5 automation modules</div>
         </div>
-        <button class="btn btn-ghost" onclick="showToast('Logs refresh ho rahe hain...','info')">🔄 Refresh</button>
+        <button class="btn btn-ghost" onclick="showToast('Refreshing logs...','info')">🔄 Refresh</button>
       </div>
 
       <div class="kpi-row">
@@ -900,7 +900,7 @@
       <div class="page-header">
         <div>
           <div class="page-h1">⚙️ Settings</div>
-          <div class="page-sub">Hospital configuration aur AI automation settings</div>
+          <div class="page-sub">Hospital configuration and AI automation settings</div>
         </div>
       </div>
 
@@ -912,8 +912,7 @@
         <div class="card-body">
           <div class="alert blue" style="margin-bottom:0">
             <span>ℹ️</span>
-            <div>Supabase connection ke liye neeche JavaScript mein <strong>SUPABASE_URL</strong> aur <strong>SUPABASE_ANON_KEY</strong> replace karo.</div>
-          </div>
+            <div>To connect Supabase, replace <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> in the JavaScript below.</div>
         </div>
       </div>
 
@@ -925,7 +924,7 @@
             <div class="form-group"><label class="form-label">City</label><input class="form-input" value="Bhopal, Madhya Pradesh"></div>
             <div class="form-group"><label class="form-label">Contact Email</label><input class="form-input" value="admin@medicare-bhopal.com"></div>
             <div class="form-group"><label class="form-label">WhatsApp Business Number</label><input class="form-input" value="+91 98765 43210"></div>
-            <button class="btn btn-primary" onclick="showToast('Settings save ho gayi!','success')">💾 Save Changes</button>
+            <button class="btn btn-primary" onclick="showToast('Settings saved!','success')">💾 Save Changes</button>
           </div>
         </div>
         <div class="card">
@@ -936,7 +935,7 @@
             <div class="form-group"><label class="form-label">Reminder Window (2h before)</label><input class="form-input" value="120 minutes"></div>
             <div class="form-group"><label class="form-label">Max Retry Calls</label><input class="form-input" value="3" type="number"></div>
             <div class="form-group"><label class="form-label">Error Alert Email</label><input class="form-input" value="tech@medicare-bhopal.com"></div>
-            <button class="btn btn-primary" onclick="showToast('AI config update ho gayi!','success')">💾 Save Config</button>
+            <button class="btn btn-primary" onclick="showToast('AI configuration updated!','success')">💾 Save Config</button>
           </div>
         </div>
       </div>
@@ -950,12 +949,12 @@
 <div class="modal-overlay" id="apptModal">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">📅 Naya Appointment Book Karo</div>
+      <div class="modal-title">📅 Book New Appointment</div>
       <button class="modal-close" onclick="closeModal('apptModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Patient Ka Naam</label><input id="apptPatientName" class="form-input" placeholder="Pura naam likhein"></div>
+        <div class="form-group"><label class="form-label">Patient Name</label><input id="apptPatientName" class="form-input" placeholder="Enter full name"></div>
         <div class="form-group"><label class="form-label">Mobile Number</label><input id="apptPatientPhone" class="form-input" placeholder="+91 XXXXX XXXXX" type="tel"></div>
       </div>
       <div class="form-row">
@@ -995,7 +994,7 @@
     <div class="modal-body">
       <div class="form-group">
         <label class="form-label">Patient Name</label>
-        <input id="patientName" class="form-input" placeholder="Pura naam likhein">
+        <input id="patientName" class="form-input" placeholder="Enter full name">
       </div>
       <div class="form-group">
         <label class="form-label">Mobile Number</label>
@@ -1047,7 +1046,7 @@
       </div>
       <div class="alert blue" style="margin-bottom:16px">
         <span>ℹ️</span>
-        <div>Report file private Supabase Storage bucket mein save hoga aur uska record <strong>reports</strong> table mein create hoga.</div>
+        <div>The report file will be saved in a private Supabase Storage bucket and its record <strong>reports</strong> will be created in the</div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="closeModal('reportModal')">Cancel</button>
@@ -1098,7 +1097,7 @@ async function testSupabaseConnection() {
       console.error('Supabase connection error:', error);
 
       showToast(
-        'Supabase connection failed. URL/key aur RLS policies check karo.',
+        'Supabase connection failed. Check the URL/key and RLS policies.',
         'error'
       );
 
@@ -1159,12 +1158,12 @@ const mockCalls = [
 ];
 
 const mockWAConversations = [
-  {name:'Rahul Sharma', msg:'Doctor sahab ka appointment cancel kar sakte hain?', time:'2 min ago', type:'Cancellation', status:'resolved'},
+  {name:'Rahul Sharma', msg:'Can I cancel my appointment with the doctor?', time:'2 min ago', type:'Cancellation', status:'resolved'},
   {name:'Anita Mishra', msg:'Meri blood report kab aayegi?', time:'5 min ago', type:'Report Query', status:'resolved'},
-  {name:'Unknown User', msg:'Cardiology mein appointment chahiye kal', time:'8 min ago', type:'Booking', status:'in_progress'},
-  {name:'Meera Gupta', msg:'Dr. Vikram ki slot 3 PM hai?', time:'12 min ago', type:'Availability', status:'resolved'},
-  {name:'Mohit Thakur', msg:'Mujhe reminder mila, confirm kar raha hoon', time:'18 min ago', type:'Confirmation', status:'resolved'},
-  {name:'Ravi Kumar', msg:'Front desk se baat karni hai', time:'25 min ago', type:'Escalation', status:'escalated'},
+  {name:'Unknown User', msg:'I need a Cardiology appointment tomorrow', time:'8 min ago', type:'Booking', status:'in_progress'},
+  {name:'Meera Gupta', msg:'Does Dr. Vikram have a 3 PM slot?', time:'12 min ago', type:'Availability', status:'resolved'},
+  {name:'Mohit Thakur', msg:'I received the reminder and I am confirming', time:'18 min ago', type:'Confirmation', status:'resolved'},
+  {name:'Ravi Kumar', msg:'I need to speak with the front desk', time:'25 min ago', type:'Escalation', status:'escalated'},
 ];
 
 const mockReports = [
@@ -1177,12 +1176,12 @@ const mockReports = [
 ];
 
 const mockFeedback = [
-  {patient:'Anita Mishra', doctor:'Dr. Pooja Sharma', rating:5, comment:'Bahut achha treatment mila, doctor ne time diya aur explain kiya', date:'17 Aug', dept:'Gynecology'},
-  {patient:'Mohit Thakur', doctor:'Dr. Anjali Mehta', rating:4, comment:'Good service, thoda wait karna pada', date:'17 Aug', dept:'Cardiology'},
-  {patient:'Sunita Singh', doctor:'Dr. Priya Das', rating:5, comment:'Excellent! Bachon ke saath bahut patient hain doctor', date:'16 Aug', dept:'Pediatrics'},
-  {patient:'Deepak Yadav', doctor:'Dr. Suresh Kumar', rating:2, comment:'Waiting time bahut zyada tha, 2 ghante wait kiya', date:'16 Aug', dept:'Orthopedics'},
+  {patient:'Anita Mishra', doctor:'Dr. Pooja Sharma', rating:5, comment:'The treatment was very good. The doctor gave me time and explained everything.', date:'17 Aug', dept:'Gynecology'},
+  {patient:'Mohit Thakur', doctor:'Dr. Anjali Mehta', rating:4, comment:'Good service, but I had to wait a little', date:'17 Aug', dept:'Cardiology'},
+  {patient:'Sunita Singh', doctor:'Dr. Priya Das', rating:5, comment:'Excellent! The doctor is very patient with children', date:'16 Aug', dept:'Pediatrics'},
+  {patient:'Deepak Yadav', doctor:'Dr. Suresh Kumar', rating:2, comment:'The waiting time was very long; I waited for 2 hours', date:'16 Aug', dept:'Orthopedics'},
   {patient:'Kavita Sharma', doctor:'Dr. Vikram Singh', rating:5, comment:'Perfect diagnosis, very knowledgeable', date:'15 Aug', dept:'Neurology'},
-  {patient:'Sunil Patel', doctor:'Dr. Suresh Kumar', rating:3, comment:'Theek tha, aur improvement ho sakti hai', date:'15 Aug', dept:'Orthopedics'},
+  {patient:'Sunil Patel', doctor:'Dr. Suresh Kumar', rating:3, comment:'It was okay, but there is room for improvement', date:'15 Aug', dept:'Orthopedics'},
 ];
 
 const mockAutomation = [
@@ -1199,9 +1198,9 @@ const mockAutomation = [
 ];
 
 const activityItems = [
-  {icon:'💬', color:'rgba(59,130,246,0.15)', text:'AI ne Rahul Sharma ka appointment WhatsApp pe confirm kiya', time:'2 min ago'},
-  {icon:'📞', color:'rgba(16,185,129,0.15)', text:'AI call: Mohit Thakur ne 2:30 PM slot confirm ki', time:'8 min ago'},
-  {icon:'🧪', color:'rgba(239,68,68,0.15)', text:'CRITICAL: Priya Verma ki CBC report — doctor alert sent', time:'15 min ago'},
+  {icon:'💬', color:'rgba(59,130,246,0.15)', text:'AI confirmed Rahul Sharma appointment on WhatsApp', time:'2 min ago'},
+  {icon:'📞', color:'rgba(16,185,129,0.15)', text:'AI call: Mohit Thakur confirmed the 2:30 PM slot', time:'8 min ago'},
+  {icon:'🧪', color:'rgba(239,68,68,0.15)', text:'CRITICAL: Priya Verma CBC report — doctor alert sent', time:'15 min ago'},
   {icon:'⭐', color:'rgba(245,158,11,0.15)', text:'Anita Mishra ne 5★ feedback diya', time:'30 min ago'},
   {icon:'🔄', color:'rgba(139,92,246,0.15)', text:'Deepak Yadav appointment reschedule request received', time:'45 min ago'},
 ];
@@ -1417,14 +1416,14 @@ async function renderDashAppts() {
             <button
               class="btn btn-ghost"
               style="font-size:11px;padding:4px 8px"
-              onclick="showToast('${patientName} ko WhatsApp message bheja ja raha hai...','success')">
+              onclick="showToast('Sending a WhatsApp message to ${patientName}...','success')">
               💬
             </button>
 
             <button
               class="btn btn-ghost"
               style="font-size:11px;padding:4px 8px;margin-left:4px"
-              onclick="showToast('${patientName} ka detail khul raha hai...','info')">
+              onclick="showToast('Opening ${patientName} details...','info')">
               👁
             </button>
 
@@ -1498,7 +1497,7 @@ async function renderAppointments() {
 
   if (error) {
     console.error('Supabase appointments error:', error);
-    showToast('Appointments database se load nahi hui!', 'error');
+    showToast('Failed to load appointments from the database!', 'error');
     return;
   }
 
@@ -1564,11 +1563,11 @@ async function renderAppointments() {
         </td>
         <td>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px"
-            onclick="showToast('Reschedule dialog khul raha hai...','info')">🔄</button>
+            onclick="showToast('Opening reschedule dialog...','info')">🔄</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
             onclick="cancelAppt('${a.id}','${patient}')">❌</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
-            onclick="showToast('${patient} ko reminder bheja!','success')">🔔</button>
+            onclick="showToast('Reminder sent to ${patient}!','success')">🔔</button>
         </td>
       </tr>
     `;
@@ -1583,7 +1582,7 @@ function filterApptTab(el, filter) {
 }
 
 function cancelAppt(id, name) {
-  showToast(`${name} ka appointment cancel ho gaya. AI WhatsApp notify karega.`, 'info');
+  showToast(`${name}'s appointment has been cancelled. AI will notify them on WhatsApp.`, 'info');
 }
 
 // ─── PATIENTS ───
@@ -1592,7 +1591,7 @@ async function renderPatients() {
   if (!grid) return;
 
   if (!window.supabaseClient) {
-    grid.innerHTML = '<div style="color:var(--text-muted);padding:20px">Supabase client initialize nahi hua.</div>';
+    grid.innerHTML = '<div style="color:var(--text-muted);padding:20px">Supabase client is not initialized.</div>';
     return;
   }
 
@@ -1608,7 +1607,7 @@ async function renderPatients() {
       grid.innerHTML = `
         <div class="card" style="grid-column:1/-1">
           <div class="card-body" style="text-align:center;color:var(--text-muted)">
-            No patients found in Supabase. Register Patient se pehla patient add karo.
+            No patients found in Supabase. Register the first patient.
           </div>
         </div>
       `;
@@ -1636,8 +1635,8 @@ async function renderPatients() {
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} ko WhatsApp message bhejne ka workflow baad mein connect hoga.','info')">💬</button>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} ka profile open hoga.','info')">👁</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('The WhatsApp messaging workflow for ${safeName} will be connected later.','info')">💬</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} profile will open.','info')">👁</button>
           </div>
         </div>
       `;
@@ -1647,7 +1646,7 @@ async function renderPatients() {
     grid.innerHTML = `
       <div class="card" style="grid-column:1/-1">
         <div class="card-body" style="color:var(--red)">
-          Patients load nahi hue: ${error?.message || 'Unknown error'}
+          Failed to load patients: ${error?.message || 'Unknown error'}
         </div>
       </div>
     `;
@@ -1655,7 +1654,7 @@ async function renderPatients() {
 }
 
 function showPatientDetail(name) {
-  showToast(`${name} ka full profile khul raha hai...`, 'info');
+  showToast(`Opening ${name}'s full profile...`, 'info');
 }
 
 // ─── WHATSAPP ───
@@ -1668,7 +1667,7 @@ function renderWAConversations() {
   const el = document.getElementById('waConversations');
   if (!el) return;
   el.innerHTML = mockWAConversations.map(c => `
-    <div class="call-item" style="cursor:pointer" onclick="showToast('Conversation history khul rahi hai...','info')">
+    <div class="call-item" style="cursor:pointer" onclick="showToast('Opening conversation history...','info')">
       <div class="call-avatar" style="background:var(--accent-glow);color:var(--accent-light)">${c.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
       <div class="call-info">
         <div class="call-name">${c.name}</div>
@@ -1723,7 +1722,7 @@ function renderVoice() {
         <div class="call-outcome" style="color:${outcomeColor[c.outcome]}">${outcomeMap[c.outcome]}</div>
         <div class="call-time">${c.time} • Attempt ${c.retry}</div>
       </div>
-      <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:12px" onclick="showToast('Manual call trigger ho raha hai ${c.patient} ke liye...','info')">📞 Retry</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:12px" onclick="showToast('Triggering a manual call for ${c.patient}...','info')">📞 Retry</button>
     </div>
   `).join('');
 }
@@ -1734,7 +1733,7 @@ async function renderReports() {
   if (!tbody) return;
 
   if (!window.supabaseClient) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Supabase client initialize nahi hua.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Supabase client is not initialized.</td></tr>';
     return;
   }
 
@@ -1792,11 +1791,11 @@ async function renderReports() {
           <td>${r.doctor_notes ? '<span class="badge blue">Notes ✓</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
           <td>
             ${path
-              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('${safeFileLabel} Supabase Storage mein saved hai.','success')">📄 Saved</button>`
+              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('${safeFileLabel} is saved in Supabase Storage.','success')">📄 Saved</button>`
               : '<span style="color:var(--text-muted);font-size:12px">—</span>'}
           </td>
           <td>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('${patientName} ko WhatsApp report delivery baad mein connect hogi.','info')">💬</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('WhatsApp report delivery for ${patientName} will be connected later.','info')">💬</button>
           </td>
         </tr>
       `;
@@ -1806,7 +1805,7 @@ async function renderReports() {
     tbody.innerHTML = `
       <tr>
         <td colspan="8" style="text-align:center;padding:30px;color:var(--red)">
-          Reports load nahi hue: ${error?.message || 'Unknown error'}
+          Failed to load reports: ${error?.message || 'Unknown error'}
         </td>
       </tr>
     `;
@@ -1977,28 +1976,28 @@ async function bookAppointment() {
   const notes = document.getElementById('apptNotes')?.value.trim() || '';
 
   if (!name) {
-    showToast('Patient ka naam enter karo.', 'error');
+    showToast('Enter patient name.', 'error');
     return;
   }
 
   if (phone.length < 10) {
-    showToast('Valid mobile number enter karo.', 'error');
+    showToast('Enter a valid mobile number.', 'error');
     return;
   }
 
   if (!date || !timeText) {
-    showToast('Date aur time slot select karo.', 'error');
+    showToast('Select the appointment date and time slot.', 'error');
     return;
   }
 
   const time = parseTime12Hour(timeText);
   if (!time) {
-    showToast('Time slot invalid hai.', 'error');
+    showToast('The selected time slot is invalid.', 'error');
     return;
   }
 
   if (!window.supabaseClient) {
-    showToast('Supabase client initialize nahi hua.', 'error');
+    showToast('Supabase client is not initialized.', 'error');
     return;
   }
 
@@ -2020,7 +2019,7 @@ async function bookAppointment() {
     const doctor = doctors?.[0];
 
     if (!doctor) {
-      throw new Error(`Doctor "${doctorName}" Supabase doctors table mein nahi mila.`);
+      throw new Error(`Doctor "${doctorName}" was not found in the Supabase doctors table.`);
     }
 
     // Convert the selected local date/time into an ISO timestamp.
@@ -2028,7 +2027,7 @@ async function bookAppointment() {
     const slotDate = new Date(year, month - 1, day, time.hour, time.minute, 0, 0);
 
     if (Number.isNaN(slotDate.getTime())) {
-      throw new Error('Appointment date/time invalid hai.');
+      throw new Error('The appointment date/time is invalid.');
     }
 
     const slotTimeIso = slotDate.toISOString();
@@ -2044,7 +2043,7 @@ async function bookAppointment() {
     if (existingError) throw new Error(`Slot check failed: ${existingError.message}`);
 
     if (existingAppointments?.length) {
-      throw new Error('Ye doctor + time slot already booked hai. Dusra slot select karo.');
+      throw new Error('This doctor and time slot are already booked. Select another slot.');
     }
 
     // Reuse an existing patient by phone; otherwise create a new patient.
@@ -2119,7 +2118,7 @@ async function bookAppointment() {
 
 function sendWhatsAppDemo() {
   if (!lastBookedAppointment) {
-    showToast('Pehle appointment book karo. WhatsApp confirmation alag step hai.', 'info');
+    showToast('Book the appointment first. WhatsApp confirmation is a separate step.', 'info');
     return;
   }
 
@@ -2156,17 +2155,17 @@ async function registerPatient() {
   const button = document.getElementById('registerPatientBtn');
 
   if (!name) {
-    showToast('Patient ka naam enter karo.', 'error');
+    showToast('Enter patient name.', 'error');
     return;
   }
 
   if (normalizePhone(phone).length < 10) {
-    showToast('Valid mobile number enter karo.', 'error');
+    showToast('Enter a valid mobile number.', 'error');
     return;
   }
 
   if (!window.supabaseClient) {
-    showToast('Supabase client initialize nahi hua.', 'error');
+    showToast('Supabase client is not initialized.', 'error');
     return;
   }
 
@@ -2186,7 +2185,7 @@ async function registerPatient() {
 
     if (existing?.length) {
       closeModal('patientModal');
-      showToast(`${existing[0].name || 'Patient'} already registered hai.`, 'info');
+      showToast(`${existing[0].name || 'Patient'} is already registered.`, 'info');
       await renderPatients();
       return;
     }
@@ -2236,7 +2235,7 @@ async function openUploadReport() {
 
     if (!patients?.length) {
       patientSelect.innerHTML = '<option value="">No patients found</option>';
-      showToast('Pehle ek patient register karo.', 'info');
+      showToast('Register a patient first.', 'info');
       return;
     }
 
@@ -2247,7 +2246,7 @@ async function openUploadReport() {
   } catch (error) {
     console.error('REPORT PATIENT LOAD ERROR:', error);
     patientSelect.innerHTML = '<option value="">Unable to load patients</option>';
-    showToast(error?.message || 'Patients load nahi hue.', 'error');
+    showToast(error?.message || 'Failed to load patients.', 'error');
   }
 }
 
@@ -2260,17 +2259,17 @@ async function uploadReport() {
   const button = document.getElementById('uploadReportBtn');
 
   if (!patientId) {
-    showToast('Patient select karo.', 'error');
+    showToast('Select a patient.', 'error');
     return;
   }
 
   if (!reportType) {
-    showToast('Report type enter karo.', 'error');
+    showToast('Enter the report type.', 'error');
     return;
   }
 
   if (!file) {
-    showToast('Report file select karo.', 'error');
+    showToast('Select a report file.', 'error');
     return;
   }
 
@@ -2279,17 +2278,17 @@ async function uploadReport() {
   const ext = String(file.name.split('.').pop() || '').toLowerCase();
 
   if (!allowedTypes.includes(file.type) && !allowedExt.includes(ext)) {
-    showToast('Sirf PDF, JPG ya PNG files allowed hain.', 'error');
+    showToast('Only PDF, JPG, or PNG files are allowed.', 'error');
     return;
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    showToast('Report file 5 MB se chhoti honi chahiye.', 'error');
+    showToast('The report file must be smaller than 5 MB.', 'error');
     return;
   }
 
   if (!window.supabaseClient) {
-    showToast('Supabase client initialize nahi hua.', 'error');
+    showToast('Supabase client is not initialized.', 'error');
     return;
   }
 
@@ -2351,15 +2350,15 @@ async function uploadReport() {
 }
 
 function filterAppointments() {
-  showToast('Filter options khul rahe hain...', 'info');
+  showToast('Opening filter options...', 'info');
 }
 
 function triggerManualCall() {
-  showToast('Manual call trigger dialog khul raha hai...', 'info');
+  showToast('Opening manual call trigger dialog...', 'info');
 }
 
 function refreshDashboard() {
-  showToast('Dashboard refresh ho raha hai...', 'info');
+  showToast('Refreshing dashboard...', 'info');
   setTimeout(() => { renderDashboard(); showToast('Dashboard updated!', 'success'); }, 800);
 }
 
@@ -2368,7 +2367,7 @@ function showNotifications() {
 }
 
 function handleSearch(val) {
-  if (val.length > 2) showToast(`"${val}" search ho raha hai...`, 'info');
+  if (val.length > 2) showToast(`Searching for "${val}"...`, 'info');
 }
 
 function filterApptTab(el, filter) {
