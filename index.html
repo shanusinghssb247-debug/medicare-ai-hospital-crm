@@ -985,6 +985,78 @@
   </div>
 </div>
 
+<!-- ─── REGISTER PATIENT MODAL ─── -->
+<div class="modal-overlay" id="patientModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">👤 Register New Patient</div>
+      <button class="modal-close" onclick="closeModal('patientModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Patient Name</label>
+        <input id="patientName" class="form-input" placeholder="Pura naam likhein">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number</label>
+        <input id="patientPhone" class="form-input" placeholder="+91 XXXXX XXXXX" type="tel">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email (optional)</label>
+        <input id="patientEmail" class="form-input" placeholder="patient@example.com" type="email">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('patientModal')">Cancel</button>
+        <button class="btn btn-primary" id="registerPatientBtn" onclick="registerPatient()">✅ Register Patient</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── UPLOAD REPORT MODAL ─── -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">🧪 Upload Patient Report</div>
+      <button class="modal-close" onclick="closeModal('reportModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Patient</label>
+        <select id="reportPatient" class="form-select">
+          <option value="">Loading patients...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Report Type</label>
+        <input id="reportType" class="form-input" placeholder="e.g. CBC, MRI Brain, X-Ray">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Report File</label>
+        <input id="reportFile" class="form-input" type="file" accept=".pdf,.png,.jpg,.jpeg">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">PDF/JPG/PNG • Max 5 MB</div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-soft);cursor:pointer">
+          <input id="reportCritical" type="checkbox"> Mark as critical
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Doctor Notes (optional)</label>
+        <textarea id="reportDoctorNotes" class="form-textarea" placeholder="Doctor notes / internal notes..."></textarea>
+      </div>
+      <div class="alert blue" style="margin-bottom:16px">
+        <span>ℹ️</span>
+        <div>Report file private Supabase Storage bucket mein save hoga aur uska record <strong>reports</strong> table mein create hoga.</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('reportModal')">Cancel</button>
+        <button class="btn btn-primary" id="uploadReportBtn" onclick="uploadReport()">⬆️ Upload Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -1515,28 +1587,71 @@ function cancelAppt(id, name) {
 }
 
 // ─── PATIENTS ───
-function renderPatients() {
+async function renderPatients() {
   const grid = document.getElementById('patientGrid');
   if (!grid) return;
-  grid.innerHTML = mockPatients.map(p => `
-    <div class="patient-card" onclick="showPatientDetail('${p.name}')">
-      <div class="patient-avatar" style="background:linear-gradient(135deg,${p.color}33,${p.color}66);color:${p.color}">${p.initials}</div>
-      <div style="flex:1">
-        <div class="patient-name">${p.name}</div>
-        <div class="patient-meta">Age ${p.age} • ${p.blood} • ${p.dept}</div>
-        <div class="patient-meta">📞 ${p.phone}</div>
-        <div class="patient-tags">
-          <span class="tag">Last: ${p.lastVisit}</span>
-          <span class="tag">${p.count} visits</span>
-          ${p.status === 'critical' ? '<span class="badge critical">🚨 Critical</span>' : '<span class="badge confirmed">✅ Active</span>'}
+
+  if (!window.supabaseClient) {
+    grid.innerHTML = '<div style="color:var(--text-muted);padding:20px">Supabase client initialize nahi hua.</div>';
+    return;
+  }
+
+  try {
+    const { data: patients, error } = await supabaseClient
+      .from('patients')
+      .select('id, name, phone, email, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Patients load failed: ${error.message}`);
+
+    if (!patients || !patients.length) {
+      grid.innerHTML = `
+        <div class="card" style="grid-column:1/-1">
+          <div class="card-body" style="text-align:center;color:var(--text-muted)">
+            No patients found in Supabase. Register Patient se pehla patient add karo.
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = patients.map(p => {
+      const name = p.name || 'Unnamed Patient';
+      const initials = name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'PT';
+      const created = p.created_at
+        ? new Date(p.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+        : '—';
+      const safeName = name.replace(/'/g, "\\'");
+
+      return `
+        <div class="patient-card" onclick="showPatientDetail('${safeName}')">
+          <div class="patient-avatar" style="background:var(--accent-glow);color:var(--accent-light)">${initials}</div>
+          <div style="flex:1">
+            <div class="patient-name">${name}</div>
+            <div class="patient-meta">📞 ${p.phone || '—'}</div>
+            <div class="patient-meta">✉️ ${p.email || '—'}</div>
+            <div class="patient-tags">
+              <span class="tag">Registered: ${created}</span>
+              <span class="badge confirmed">✅ Active</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} ko WhatsApp message bhejne ka workflow baad mein connect hoga.','info')">💬</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} ka profile open hoga.','info')">👁</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('PATIENTS LOAD ERROR:', error);
+    grid.innerHTML = `
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-body" style="color:var(--red)">
+          Patients load nahi hue: ${error?.message || 'Unknown error'}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${p.name} ko WhatsApp message bheja ja raha hai...','success')">💬</button>
-        <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${p.name} ka appointment book ho raha hai...','info')">📅</button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }
 }
 
 function showPatientDetail(name) {
@@ -1614,24 +1729,88 @@ function renderVoice() {
 }
 
 // ─── REPORTS ───
-function renderReports() {
+async function renderReports() {
   const tbody = document.getElementById('reportsTable');
   if (!tbody) return;
-  tbody.innerHTML = mockReports.map(r => `
-    <tr>
-      <td><strong>${r.patient}</strong></td>
-      <td>${r.test}</td>
-      <td>${r.date}</td>
-      <td>${r.status === 'ready' ? '<span class="badge confirmed">Ready</span>' : '<span class="badge pending">Pending</span>'}</td>
-      <td>${r.critical ? '<span class="badge critical">🚨 Critical</span>' : '<span style="color:var(--text-muted);font-size:12px">Normal</span>'}</td>
-      <td>${r.summary ? '<span class="badge blue">AI Summary ✓</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
-      <td>${r.delivered ? '<span class="wa-green">✅ WhatsApp Sent</span>' : '<span style="color:var(--text-muted);font-size:12px">Pending</span>'}</td>
-      <td>
-        <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('${r.patient} ko report WhatsApp pe bheja ja raha hai...','success')">💬 Send</button>
-        <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:4px" onclick="showToast('AI summary dekh rahe hain...','info')">🤖 AI</button>
-      </td>
-    </tr>
-  `).join('');
+
+  if (!window.supabaseClient) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Supabase client initialize nahi hua.</td></tr>';
+    return;
+  }
+
+  try {
+    const { data: reports, error } = await supabaseClient
+      .from('reports')
+      .select(`
+        id,
+        patient_id,
+        report_type,
+        report_url,
+        is_ready,
+        is_critical,
+        doctor_notes,
+        created_at,
+        ready_at,
+        patients ( name, phone )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Reports load failed: ${error.message}`);
+
+    if (!reports || !reports.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">
+            No reports found in Supabase.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = reports.map(r => {
+      const patientName = r.patients?.name || 'Unknown Patient';
+      const phone = r.patients?.phone || '—';
+      const date = r.created_at
+        ? new Date(r.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+        : '—';
+      const ready = r.is_ready !== false;
+      const path = r.report_url || '';
+      const fileLabel = path ? String(path).split('/').pop() : 'Metadata only';
+      const safeFileLabel = fileLabel.replace(/'/g, "\\'");
+
+      return `
+        <tr>
+          <td>
+            <strong>${patientName}</strong>
+            <div style="font-size:11px;color:var(--text-muted)">${phone}</div>
+          </td>
+          <td>${r.report_type || 'Report'}</td>
+          <td>${date}</td>
+          <td>${ready ? '<span class="badge confirmed">Ready</span>' : '<span class="badge pending">Pending</span>'}</td>
+          <td>${r.is_critical ? '<span class="badge critical">🚨 Critical</span>' : '<span style="color:var(--text-muted);font-size:12px">Normal</span>'}</td>
+          <td>${r.doctor_notes ? '<span class="badge blue">Notes ✓</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+          <td>
+            ${path
+              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('${safeFileLabel} Supabase Storage mein saved hai.','success')">📄 Saved</button>`
+              : '<span style="color:var(--text-muted);font-size:12px">—</span>'}
+          </td>
+          <td>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('${patientName} ko WhatsApp report delivery baad mein connect hogi.','info')">💬</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('REPORTS LOAD ERROR:', error);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center;padding:30px;color:var(--red)">
+          Reports load nahi hue: ${error?.message || 'Unknown error'}
+        </td>
+      </tr>
+    `;
+  }
 }
 
 // ─── FEEDBACK ───
@@ -1962,11 +2141,213 @@ function sendWhatsAppDemo() {
 
 
 function openAddPatient() {
-  showToast('Patient registration form khul raha hai...', 'info');
+  const modal = document.getElementById('patientModal');
+  if (!modal) return;
+  document.getElementById('patientName').value = '';
+  document.getElementById('patientPhone').value = '';
+  document.getElementById('patientEmail').value = '';
+  modal.classList.add('open');
 }
 
-function openUploadReport() {
-  showToast('Report upload dialog khul raha hai...', 'info');
+async function registerPatient() {
+  const name = document.getElementById('patientName')?.value.trim();
+  const phone = document.getElementById('patientPhone')?.value.trim();
+  const email = document.getElementById('patientEmail')?.value.trim() || null;
+  const button = document.getElementById('registerPatientBtn');
+
+  if (!name) {
+    showToast('Patient ka naam enter karo.', 'error');
+    return;
+  }
+
+  if (normalizePhone(phone).length < 10) {
+    showToast('Valid mobile number enter karo.', 'error');
+    return;
+  }
+
+  if (!window.supabaseClient) {
+    showToast('Supabase client initialize nahi hua.', 'error');
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = '⏳ Saving...';
+  }
+
+  try {
+    const { data: existing, error: lookupError } = await supabaseClient
+      .from('patients')
+      .select('id, name, phone')
+      .eq('phone', phone)
+      .limit(1);
+
+    if (lookupError) throw new Error(`Patient lookup failed: ${lookupError.message}`);
+
+    if (existing?.length) {
+      closeModal('patientModal');
+      showToast(`${existing[0].name || 'Patient'} already registered hai.`, 'info');
+      await renderPatients();
+      return;
+    }
+
+    const { data: patient, error } = await supabaseClient
+      .from('patients')
+      .insert({ name, phone, email })
+      .select('id, name, phone, email')
+      .single();
+
+    if (error) throw new Error(`Patient create failed: ${error.message}`);
+
+    closeModal('patientModal');
+    showToast(`✅ Patient registered in Supabase — ${patient.name}`, 'success');
+
+    await renderPatients();
+  } catch (error) {
+    console.error('REGISTER PATIENT ERROR:', error);
+    showToast(error?.message || 'Patient registration failed.', 'error');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = '✅ Register Patient';
+    }
+  }
+}
+
+async function openUploadReport() {
+  const modal = document.getElementById('reportModal');
+  const patientSelect = document.getElementById('reportPatient');
+  if (!modal || !patientSelect) return;
+
+  patientSelect.innerHTML = '<option value="">Loading patients...</option>';
+  document.getElementById('reportType').value = '';
+  document.getElementById('reportFile').value = '';
+  document.getElementById('reportCritical').checked = false;
+  document.getElementById('reportDoctorNotes').value = '';
+  modal.classList.add('open');
+
+  try {
+    const { data: patients, error } = await supabaseClient
+      .from('patients')
+      .select('id, name, phone')
+      .order('name', { ascending: true });
+
+    if (error) throw new Error(`Patients load failed: ${error.message}`);
+
+    if (!patients?.length) {
+      patientSelect.innerHTML = '<option value="">No patients found</option>';
+      showToast('Pehle ek patient register karo.', 'info');
+      return;
+    }
+
+    patientSelect.innerHTML = `
+      <option value="">Select patient</option>
+      ${patients.map(p => `<option value="${p.id}">${p.name || 'Unnamed'} — ${p.phone || 'No phone'}</option>`).join('')}
+    `;
+  } catch (error) {
+    console.error('REPORT PATIENT LOAD ERROR:', error);
+    patientSelect.innerHTML = '<option value="">Unable to load patients</option>';
+    showToast(error?.message || 'Patients load nahi hue.', 'error');
+  }
+}
+
+async function uploadReport() {
+  const patientId = document.getElementById('reportPatient')?.value;
+  const reportType = document.getElementById('reportType')?.value.trim();
+  const file = document.getElementById('reportFile')?.files?.[0];
+  const isCritical = !!document.getElementById('reportCritical')?.checked;
+  const doctorNotes = document.getElementById('reportDoctorNotes')?.value.trim() || null;
+  const button = document.getElementById('uploadReportBtn');
+
+  if (!patientId) {
+    showToast('Patient select karo.', 'error');
+    return;
+  }
+
+  if (!reportType) {
+    showToast('Report type enter karo.', 'error');
+    return;
+  }
+
+  if (!file) {
+    showToast('Report file select karo.', 'error');
+    return;
+  }
+
+  const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg'];
+  const allowedExt = ['pdf', 'png', 'jpg', 'jpeg'];
+  const ext = String(file.name.split('.').pop() || '').toLowerCase();
+
+  if (!allowedTypes.includes(file.type) && !allowedExt.includes(ext)) {
+    showToast('Sirf PDF, JPG ya PNG files allowed hain.', 'error');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Report file 5 MB se chhoti honi chahiye.', 'error');
+    return;
+  }
+
+  if (!window.supabaseClient) {
+    showToast('Supabase client initialize nahi hua.', 'error');
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = '⏳ Uploading...';
+  }
+
+  let storagePath = null;
+
+  try {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    storagePath = `${patientId}/${Date.now()}_${safeName}`;
+
+    const { error: storageError } = await supabaseClient.storage
+      .from('hospital-reports')
+      .upload(storagePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || 'application/octet-stream'
+      });
+
+    if (storageError) {
+      throw new Error(`Report file upload failed: ${storageError.message}`);
+    }
+
+    const { data: report, error: reportError } = await supabaseClient
+      .from('reports')
+      .insert({
+        patient_id: patientId,
+        report_type: reportType,
+        report_url: storagePath,
+        doctor_notes: doctorNotes,
+        is_ready: true,
+        is_critical: isCritical,
+        ready_at: new Date().toISOString()
+      })
+      .select('id, patient_id, report_type, report_url, is_ready, is_critical')
+      .single();
+
+    if (reportError) {
+      // Best-effort cleanup if database insert fails after storage upload.
+      await supabaseClient.storage.from('hospital-reports').remove([storagePath]);
+      throw new Error(`Report record create failed: ${reportError.message}`);
+    }
+
+    closeModal('reportModal');
+    showToast(`✅ Report uploaded in Supabase — ${String(report.id).slice(0, 8)}`, 'success');
+    await renderReports();
+  } catch (error) {
+    console.error('UPLOAD REPORT ERROR:', error);
+    showToast(error?.message || 'Report upload failed.', 'error');
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = '⬆️ Upload Report';
+    }
+  }
 }
 
 function filterAppointments() {
