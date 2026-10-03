@@ -1514,6 +1514,14 @@ function renderActivity() {
 
 // ─── APPOINTMENTS ───
 let currentApptFilter = 'all';
+let appointmentAdvancedFilters = {
+  search: '',
+  status: 'all',
+  doctor: 'all',
+  department: 'all',
+  source: 'all',
+  date: ''
+};
 
 async function renderAppointments() {
   const tbody = document.getElementById('fullApptTable');
@@ -1548,6 +1556,7 @@ async function renderAppointments() {
   }
 
   let rows = data || [];
+  window.__lastAppointmentRows = rows;
 
   if (currentApptFilter !== 'all') {
     if (currentApptFilter === 'pending') {
@@ -1555,6 +1564,29 @@ async function renderAppointments() {
     } else {
       rows = rows.filter(a => a.status === currentApptFilter);
     }
+  }
+
+  // Apply the advanced filter panel selections on top of the status tab.
+  const af = appointmentAdvancedFilters;
+  if (af.search) {
+    const q = af.search.toLowerCase();
+    rows = rows.filter(a => {
+      const patient = a.patients?.name || '';
+      const phone = a.patients?.phone || '';
+      const doctor = a.doctors?.name || '';
+      return `${patient} ${phone} ${doctor}`.toLowerCase().includes(q);
+    });
+  }
+  if (af.status !== 'all') {
+    rows = rows.filter(a => af.status === 'pending'
+      ? ['booked', 'reschedule_pending'].includes(a.status)
+      : a.status === af.status);
+  }
+  if (af.doctor !== 'all') rows = rows.filter(a => a.doctors?.name === af.doctor);
+  if (af.department !== 'all') rows = rows.filter(a => (a.doctors?.department || a.doctors?.specialty || '') === af.department);
+  if (af.source !== 'all') rows = rows.filter(a => (a.source || 'manual') === af.source);
+  if (af.date) {
+    rows = rows.filter(a => a.slot_time && new Date(a.slot_time).toISOString().slice(0, 10) === af.date);
   }
 
   if (!rows.length) {
@@ -2581,7 +2613,108 @@ async function uploadReport() {
 }
 
 function filterAppointments() {
-  showToast('Opening filter options...', 'info');
+  const existing = document.getElementById('appointmentFilterModal');
+  if (existing) existing.remove();
+
+  const sourceOptions = ['all', 'whatsapp', 'voice', 'manual'];
+  const statusOptions = [
+    ['all', 'All statuses'],
+    ['confirmed', 'Confirmed'],
+    ['booked', 'Booked'],
+    ['pending', 'Pending'],
+    ['reschedule_pending', 'Reschedule Pending'],
+    ['completed', 'Completed'],
+    ['missed', 'Missed'],
+    ['cancelled', 'Cancelled']
+  ];
+
+  const rows = window.__lastAppointmentRows || [];
+  const doctors = [...new Set(rows.map(a => a.doctors?.name).filter(Boolean))].sort();
+  const departments = [...new Set(rows.map(a => a.doctors?.department || a.doctors?.specialty).filter(Boolean))].sort();
+
+  const esc = value => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const af = appointmentAdvancedFilters;
+
+  const modal = document.createElement('div');
+  modal.id = 'appointmentFilterModal';
+  modal.className = 'modal-overlay open';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:560px">
+      <div class="modal-head">
+        <div class="modal-title">🔽 Filter Appointments</div>
+        <button class="modal-close" onclick="closeAppointmentFilter()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Search Patient / Phone / Doctor</label>
+          <input id="apptFilterSearch" class="form-input" value="${esc(af.search)}" placeholder="Search...">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="apptFilterStatus" class="form-select">
+              ${statusOptions.map(([v,l]) => `<option value="${v}" ${af.status===v?'selected':''}>${l}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Doctor</label>
+            <select id="apptFilterDoctor" class="form-select">
+              <option value="all">All doctors</option>
+              ${doctors.map(d => `<option value="${esc(d)}" ${af.doctor===d?'selected':''}>${esc(d)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <select id="apptFilterDepartment" class="form-select">
+              <option value="all">All departments</option>
+              ${departments.map(d => `<option value="${esc(d)}" ${af.department===d?'selected':''}>${esc(d)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Source</label>
+            <select id="apptFilterSource" class="form-select">
+              ${sourceOptions.map(v => `<option value="${v}" ${af.source===v?'selected':''}>${v === 'all' ? 'All sources' : v[0].toUpperCase()+v.slice(1)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Appointment Date</label>
+          <input id="apptFilterDate" class="form-input" type="date" value="${esc(af.date)}">
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+          <button class="btn btn-ghost" onclick="resetAppointmentFilters()">Reset</button>
+          <button class="btn btn-primary" onclick="applyAppointmentFilters()">Apply Filters</button>
+        </div>
+      </div>
+    </div>`;
+
+  modal.addEventListener('click', e => { if (e.target === modal) closeAppointmentFilter(); });
+  document.body.appendChild(modal);
+}
+
+function applyAppointmentFilters() {
+  appointmentAdvancedFilters = {
+    search: document.getElementById('apptFilterSearch')?.value.trim() || '',
+    status: document.getElementById('apptFilterStatus')?.value || 'all',
+    doctor: document.getElementById('apptFilterDoctor')?.value || 'all',
+    department: document.getElementById('apptFilterDepartment')?.value || 'all',
+    source: document.getElementById('apptFilterSource')?.value || 'all',
+    date: document.getElementById('apptFilterDate')?.value || ''
+  };
+  closeAppointmentFilter();
+  renderAppointments();
+  showToast('Appointment filters applied.', 'success');
+}
+
+function resetAppointmentFilters() {
+  appointmentAdvancedFilters = { search:'', status:'all', doctor:'all', department:'all', source:'all', date:'' };
+  closeAppointmentFilter();
+  renderAppointments();
+  showToast('Appointment filters reset.', 'info');
+}
+
+function closeAppointmentFilter() {
+  document.getElementById('appointmentFilterModal')?.remove();
 }
 
 function triggerManualCall() {
