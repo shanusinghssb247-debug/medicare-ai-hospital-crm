@@ -1767,8 +1767,9 @@ async function renderReports() {
       const ready = r.is_ready !== false;
       const path = r.report_url || '';
       const fileLabel = path ? String(path).split('/').pop() : 'Metadata only';
-      const safeFileLabel = String(fileLabel).replace(/'/g, "\\'");
-      const safePath = String(path).replace(/'/g, "\\'");
+      const safeFileLabel = String(fileLabel).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safePath = String(path).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const safePatientName = String(patientName).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
       return `
         <tr>
@@ -1782,11 +1783,11 @@ async function renderReports() {
           <td>${r.doctor_notes ? '<span class="badge blue">Notes ✓</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
           <td>
             ${path
-              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="openReportFile('${safePath}','${safeFileLabel}')">📄 View File</button>`
+              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="openReportFile('${safePath}','${safeFileLabel}','${String(r.patient_id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')">📄 View File</button>`
               : '<span style="color:var(--text-muted);font-size:12px">—</span>'}
           </td>
           <td>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('WhatsApp report delivery for ${patientName} will be connected later.','info')">💬</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('WhatsApp report delivery for ${safePatientName} will be connected later.','info')">💬</button>
           </td>
         </tr>
       `;
@@ -1803,17 +1804,184 @@ async function renderReports() {
   }
 }
 
-async function openReportFile(storagePath, fileName) {
-  if (!storagePath) { showToast('No file is attached to this report.', 'error'); return; }
-  if (!window.supabaseClient) { showToast('Supabase client is not initialized.', 'error'); return; }
+async function openReportFile(storagePath, fileName, patientId) {
+  if (!storagePath) {
+    showToast('No file is attached to this report.', 'error');
+    return;
+  }
+  if (!window.supabaseClient) {
+    showToast('Supabase client is not initialized.', 'error');
+    return;
+  }
+
   try {
     showToast('Opening report file...', 'info');
-    const { data, error } = await supabaseClient.storage.from('hospital-reports').createSignedUrl(storagePath, 300);
-    if (error || !data?.signedUrl) throw new Error(error?.message || 'Could not create a secure file link.');
-    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+
+    const rawValue = String(storagePath).trim();
+    const bucket = supabaseClient.storage.from('hospital-reports');
+
+    // ---------------------------------------------------------
+    // 1) EXTERNAL URL SUPPORT
+    //    Old/demo records may contain:
+    //    https://example.com/report1.pdf
+    //    Do NOT send such URLs to Supabase Storage.
+    // ---------------------------------------------------------
+    let externalUrl = null;
+
+    if (/^https?:\/\//i.test(rawValue)) {
+      try {
+        const url = new URL(rawValue);
+        const marker = '/storage/v1/object/';
+
+        // It is a Supabase Storage URL -> convert it to a bucket path.
+        if (url.pathname.includes(marker)) {
+          const objectPart = url.pathname.split(marker)[1] || '';
+          const parts = objectPart.split('/').filter(Boolean);
+
+          if (['sign', 'public', 'authenticated'].includes(parts[0])) {
+            parts.shift();
+          }
+          if (parts[0] === 'hospital-reports') {
+            parts.shift();
+          }
+
+          const storageObjectPath = parts.join('/');
+          if (storageObjectPath) {
+            externalUrl = null;
+            // Continue below using the extracted storage path.
+            storagePath = storageObjectPath;
+          }
+        } else {
+          // Genuine external file URL. Open it directly.
+          externalUrl = url.href;
+        }
+      } catch (_) {
+        // Fall through to storage-path handling.
+      }
+    }
+
+    // Some old records can be stored as "https:/example.com/file.pdf".
+    if (!externalUrl && /^https?:\/(?!\/)/i.test(rawValue)) {
+      const repaired = rawValue.replace(/^https?:\/(?!\/)/i, match => match + '/');
+      if (/^https?:\/\//i.test(repaired)) {
+        externalUrl = repaired;
+      }
+    }
+
+    if (externalUrl) {
+      window.open(externalUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // ---------------------------------------------------------
+    // 2) NORMALIZE SUPABASE STORAGE PATH
+    // ---------------------------------------------------------
+    let normalizedPath = String(storagePath).trim().replace(/^\/+/, '');
+
+    if (/\/storage\/v1\/object\//i.test(normalizedPath)) {
+      const marker = '/storage/v1/object/';
+      const objectPart = normalizedPath.split(marker)[1] || '';
+      const parts = objectPart.split('/').filter(Boolean);
+
+      if (['sign', 'public', 'authenticated'].includes(parts[0])) {
+        parts.shift();
+      }
+      if (parts[0] === 'hospital-reports') {
+        parts.shift();
+      }
+
+      normalizedPath = parts.join('/');
+    }
+
+    // Handle a path accidentally prefixed with the bucket name.
+    if (normalizedPath.startsWith('hospital-reports/')) {
+      normalizedPath = normalizedPath.slice('hospital-reports/'.length);
+    }
+
+    try {
+      normalizedPath = decodeURIComponent(normalizedPath);
+    } catch (_) {}
+
+    normalizedPath = normalizedPath
+      .replace(/^\/+/, '')
+      .replace(/\/{2,}/g, '/');
+
+    if (!normalizedPath) {
+      throw new Error('The report file path is empty or invalid.');
+    }
+
+    // ---------------------------------------------------------
+    // 3) TRY THE EXACT SUPABASE OBJECT PATH
+    // ---------------------------------------------------------
+    let signedResult = await bucket.createSignedUrl(normalizedPath, 600);
+
+    // ---------------------------------------------------------
+    // 4) FALLBACK: SEARCH THE PATIENT FOLDER
+    //    This helps when reports.report_url is stale but the
+    //    actual uploaded object still exists.
+    // ---------------------------------------------------------
+    if (signedResult.error || !signedResult.data?.signedUrl) {
+      const segments = normalizedPath.split('/').filter(Boolean);
+      const fileNameOnly = segments.pop() || String(fileName || '').trim();
+      const folderFromPath = segments.join('/');
+
+      const foldersToTry = [];
+      if (folderFromPath) foldersToTry.push(folderFromPath);
+      if (patientId && !foldersToTry.includes(String(patientId))) {
+        foldersToTry.push(String(patientId));
+      }
+
+      for (const folder of foldersToTry) {
+        const { data: objects, error: listError } = await bucket.list(folder, {
+          limit: 100,
+          search: fileNameOnly
+        });
+
+        if (listError || !Array.isArray(objects)) continue;
+
+        const exactMatch = objects.find(obj => obj.name === fileNameOnly);
+        if (exactMatch) {
+          const fallbackPath = `${folder}/${exactMatch.name}`;
+          const fallbackResult = await bucket.createSignedUrl(fallbackPath, 600);
+
+          if (!fallbackResult.error && fallbackResult.data?.signedUrl) {
+            signedResult = fallbackResult;
+            normalizedPath = fallbackPath;
+            break;
+          }
+        }
+      }
+    }
+
+    // ---------------------------------------------------------
+    // 5) PUBLIC BUCKET FALLBACK
+    // ---------------------------------------------------------
+    if (signedResult.error || !signedResult.data?.signedUrl) {
+      const publicResult = bucket.getPublicUrl(normalizedPath);
+      const publicUrl = publicResult?.data?.publicUrl;
+
+      if (publicUrl) {
+        const response = await fetch(publicUrl, { method: 'HEAD' });
+        if (response.ok) {
+          window.open(publicUrl, '_blank', 'noopener,noreferrer');
+          return;
+        }
+      }
+
+      throw new Error(
+        signedResult?.error?.message ||
+        'Report file was not found in the hospital-reports Storage bucket.'
+      );
+    }
+
+    window.open(signedResult.data.signedUrl, '_blank', 'noopener,noreferrer');
+
   } catch (error) {
     console.error('REPORT FILE OPEN ERROR:', error);
-    showToast(`Could not open ${fileName || 'report file'}: ${error?.message || 'Unknown error'}`, 'error');
+    showToast(
+      `Could not open ${fileName || 'report file'}: ${error?.message || 'Unknown error'}`,
+      'error'
+    );
   }
 }
 
