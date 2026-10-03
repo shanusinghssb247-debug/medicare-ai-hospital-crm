@@ -158,7 +158,47 @@
     cursor: pointer; position: relative; font-size: 16px; transition: background 0.2s;
   }
   .notif-btn:hover { background: var(--card-hover); }
+  .notif-btn.has-notifications { border-color: rgba(239,68,68,0.45); }
   .notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 1.5px solid var(--bg); }
+  .notif-count {
+    position:absolute; top:-7px; right:-7px; min-width:18px; height:18px;
+    padding:0 5px; border-radius:20px; background:var(--red); color:#fff;
+    font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--bg); line-height:1;
+  }
+  .notification-panel {
+    display:none; position:absolute; top:46px; right:0; width:380px; max-width:calc(100vw - 32px);
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5); overflow:hidden; z-index:300;
+  }
+  .notification-panel.open { display:block; animation:fadeIn 0.18s ease; }
+  .notification-head {
+    padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border);
+  }
+  .notification-title { font-size:14px; font-weight:700; }
+  .notification-actions { display:flex; gap:6px; }
+  .notification-action {
+    background:none; border:none; color:var(--accent-light); font-size:11px; cursor:pointer; padding:4px 6px;
+  }
+  .notification-action:hover { text-decoration:underline; }
+  .notification-list { max-height:390px; overflow-y:auto; }
+  .notification-item {
+    display:flex; gap:11px; padding:13px 15px; border-bottom:1px solid rgba(31,45,69,0.55);
+    cursor:pointer; transition:background .15s;
+  }
+  .notification-item:hover { background:var(--card-hover); }
+  .notification-item.unread { background:rgba(59,130,246,0.055); }
+  .notification-item:last-child { border-bottom:none; }
+  .notification-icon {
+    width:34px; height:34px; border-radius:9px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:15px;
+  }
+  .notification-content { flex:1; min-width:0; }
+  .notification-text { font-size:12.5px; line-height:1.45; }
+  .notification-time { margin-top:3px; font-size:10.5px; color:var(--text-muted); }
+  .notification-empty { padding:30px 18px; text-align:center; color:var(--text-muted); font-size:12px; }
+  .notification-footer { padding:10px 15px; border-top:1px solid var(--border); font-size:11px; color:var(--text-muted); }
 
   /* ─── CONTENT ─── */
   .content { padding: 24px 28px; flex: 1; }
@@ -482,9 +522,23 @@
       <span>🔍</span>
       <input type="text" placeholder="Search patients..." id="globalSearch" oninput="handleSearch(this.value)">
     </div>
-    <div class="notif-btn" onclick="showNotifications()">
+    <div class="notif-btn" id="notificationButton" onclick="showNotifications()">
       🔔
-      <div class="notif-dot"></div>
+      <div class="notif-dot" id="notificationDot"></div>
+      <div class="notif-count" id="notificationCount" style="display:none">0</div>
+      <div class="notification-panel" id="notificationPanel" onclick="event.stopPropagation()">
+        <div class="notification-head">
+          <div class="notification-title">Notifications</div>
+          <div class="notification-actions">
+            <button class="notification-action" onclick="markAllNotificationsRead()">Mark all read</button>
+            <button class="notification-action" onclick="refreshNotifications()">Refresh</button>
+          </div>
+        </div>
+        <div class="notification-list" id="notificationList">
+          <div class="notification-empty">Loading notifications...</div>
+        </div>
+        <div class="notification-footer" id="notificationFooter">Checking hospital activity...</div>
+      </div>
     </div>
     <button class="btn btn-primary" onclick="openNewAppointment()">+ New Appointment</button>
   </div>
@@ -2539,9 +2593,198 @@ function refreshDashboard() {
   setTimeout(() => { renderDashboard(); showToast('Dashboard updated!', 'success'); }, 800);
 }
 
-function showNotifications() {
-  showToast('2 missed appointments, 12 WhatsApp messages pending', 'info');
+let notificationItems = [];
+let notificationsRead = JSON.parse(localStorage.getItem('medicare_notifications_read') || '{}');
+
+function notificationKey(item) {
+  return String(item.id || `${item.type}-${item.text}`);
 }
+
+function isNotificationRead(item) {
+  return !!notificationsRead[notificationKey(item)];
+}
+
+function saveNotificationReadState() {
+  localStorage.setItem('medicare_notifications_read', JSON.stringify(notificationsRead));
+}
+
+function relativeNotificationTime(value) {
+  if (!value) return 'Recently';
+  const diff = Math.max(0, Date.now() - new Date(value).getTime());
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  return `${Math.floor(hours / 24)} day(s) ago`;
+}
+
+function renderNotificationList() {
+  const list = document.getElementById('notificationList');
+  const countEl = document.getElementById('notificationCount');
+  const dot = document.getElementById('notificationDot');
+  const button = document.getElementById('notificationButton');
+  const footer = document.getElementById('notificationFooter');
+
+  if (!list) return;
+
+  const unread = notificationItems.filter(item => !isNotificationRead(item));
+
+  if (!notificationItems.length) {
+    list.innerHTML = '<div class="notification-empty">✅ You are all caught up.</div>';
+  } else {
+    list.innerHTML = notificationItems.map(item => {
+      const unreadClass = isNotificationRead(item) ? '' : ' unread';
+      return `
+        <div class="notification-item${unreadClass}" onclick="handleNotificationClick('${String(item.id).replace(/'/g, "\\'")}')">
+          <div class="notification-icon" style="background:${item.bg};color:${item.color}">${item.icon}</div>
+          <div class="notification-content">
+            <div class="notification-text">${item.text}</div>
+            <div class="notification-time">${relativeNotificationTime(item.time)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  if (countEl) {
+    countEl.textContent = unread.length > 99 ? '99+' : String(unread.length);
+    countEl.style.display = unread.length ? 'flex' : 'none';
+  }
+  if (dot) dot.style.display = unread.length ? 'block' : 'none';
+  if (button) button.classList.toggle('has-notifications', unread.length > 0);
+  if (footer) footer.textContent = notificationItems.length
+    ? `${notificationItems.length} active notification${notificationItems.length === 1 ? '' : 's'}`
+    : 'No new hospital activity';
+}
+
+async function loadNotifications() {
+  const list = document.getElementById('notificationList');
+  if (list) list.innerHTML = '<div class="notification-empty">Loading live notifications...</div>';
+
+  const items = [];
+
+  if (!window.supabaseClient) {
+    if (list) list.innerHTML = '<div class="notification-empty">Supabase is not connected.</div>';
+    return;
+  }
+
+  try {
+    const [apptResult, reportResult] = await Promise.all([
+      supabaseClient
+        .from('appointments')
+        .select('id,status,slot_time,created_at,patients(name)')
+        .in('status', ['missed', 'booked', 'pending', 'reschedule_pending'])
+        .order('slot_time', { ascending: true })
+        .limit(20),
+      supabaseClient
+        .from('reports')
+        .select('id,report_type,is_ready,created_at,ready_at,patients(name)')
+        .eq('is_ready', true)
+        .order('created_at', { ascending: false })
+        .limit(10)
+    ]);
+
+    if (!apptResult.error) {
+      (apptResult.data || []).forEach(a => {
+        const patient = a.patients?.name || 'Unknown Patient';
+        const isMissed = a.status === 'missed';
+        items.push({
+          id: `appointment-${a.id}`,
+          type: 'appointment',
+          icon: isMissed ? '⚠️' : '📅',
+          bg: isMissed ? 'var(--red-bg)' : 'var(--yellow-bg)',
+          color: isMissed ? 'var(--red)' : 'var(--yellow)',
+          text: isMissed
+            ? `${patient} has a missed appointment. Follow-up may be required.`
+            : `${patient} has a ${a.status === 'reschedule_pending' ? 'reschedule request' : 'pending'} appointment.`,
+          time: a.slot_time || a.created_at,
+          target: 'appointments'
+        });
+      });
+    } else {
+      console.warn('Notification appointments query failed:', apptResult.error);
+    }
+
+    if (!reportResult.error) {
+      (reportResult.data || []).forEach(r => {
+        const patient = r.patients?.name || 'Unknown Patient';
+        items.push({
+          id: `report-${r.id}`,
+          type: 'report',
+          icon: '🧪',
+          bg: 'var(--green-bg)',
+          color: 'var(--green)',
+          text: `${r.report_type || 'Lab report'} for ${patient} is ready.`,
+          time: r.ready_at || r.created_at,
+          target: 'reports'
+        });
+      });
+    } else {
+      console.warn('Notification reports query failed:', reportResult.error);
+    }
+
+    items.sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+    notificationItems = items.slice(0, 15);
+    renderNotificationList();
+  } catch (error) {
+    console.error('NOTIFICATIONS LOAD ERROR:', error);
+    if (list) list.innerHTML = '<div class="notification-empty">Could not load notifications right now.</div>';
+  }
+}
+
+async function showNotifications() {
+  const panel = document.getElementById('notificationPanel');
+  if (!panel) return;
+
+  const wasOpen = panel.classList.contains('open');
+  document.querySelectorAll('.notification-panel.open').forEach(p => p.classList.remove('open'));
+
+  if (wasOpen) return;
+
+  panel.classList.add('open');
+  await loadNotifications();
+}
+
+function handleNotificationClick(id) {
+  const item = notificationItems.find(n => String(n.id) === String(id));
+  if (!item) return;
+
+  notificationsRead[notificationKey(item)] = true;
+  saveNotificationReadState();
+  renderNotificationList();
+
+  const panel = document.getElementById('notificationPanel');
+  if (panel) panel.classList.remove('open');
+
+  if (item.target === 'appointments') {
+    navigate('appointments', null);
+  } else if (item.target === 'reports') {
+    navigate('reports', null);
+  }
+}
+
+function markAllNotificationsRead() {
+  notificationItems.forEach(item => {
+    notificationsRead[notificationKey(item)] = true;
+  });
+  saveNotificationReadState();
+  renderNotificationList();
+  showToast('All notifications marked as read.', 'success');
+}
+
+async function refreshNotifications() {
+  await loadNotifications();
+  showToast('Notifications refreshed.', 'success');
+}
+
+document.addEventListener('click', function(event) {
+  const panel = document.getElementById('notificationPanel');
+  const button = document.getElementById('notificationButton');
+  if (panel && button && !button.contains(event.target)) {
+    panel.classList.remove('open');
+  }
+});
 
 function handleSearch(val) {
   if (val.length > 2) showToast(`Searching for "${val}"...`, 'info');
@@ -2565,6 +2808,7 @@ document.getElementById('topbar-date').textContent = d.toLocaleDateString('en-IN
 
 // ─── INIT ───
 renderDashboard();
+loadNotifications();
 
 function exportAppointmentsCSV() {
   const rows = Array.from(document.querySelectorAll('table tbody tr'));
