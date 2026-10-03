@@ -501,7 +501,7 @@
           <div class="page-sub">Today's overview — Monday, 17 August 2026</div>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="showToast('Downloading report...', 'info')">📥 Export</button>
+          <button class="btn btn-ghost" onclick="exportDashboardReport()">📥 Export</button>
           <button class="btn btn-ghost" onclick="refreshDashboard()">🔄 Refresh</button>
         </div>
       </div>
@@ -689,7 +689,7 @@
           <div class="card-title">📋 Appointment List</div>
           <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:12px;color:var(--text-muted)">17 Aug 2026</span>
-            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="showToast('Exporting...', 'success')">📥 CSV</button>
+            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="exportAppointmentsCSV()">📥 CSV</button>
           </div>
         </div>
         <div class="table-wrap">
@@ -1236,6 +1236,169 @@ function renderPage(page) {
   else if (page === 'feedback') renderFeedback();
   else if (page === 'analytics') renderAnalytics();
   else if (page === 'automation') renderAutomation();
+}
+
+// ─── EXPORT HELPERS ───
+function csvEscape(value) {
+  if (value === null || value === undefined) return '';
+  const text = String(value);
+  if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
+}
+
+function downloadCsv(filename, rows) {
+  if (!rows || !rows.length) {
+    showToast('Nothing to export.', 'info');
+    return;
+  }
+
+  const csv = rows
+    .map(row => row.map(csvEscape).join(','))
+    .join('\n');
+
+  const blob = new Blob(["\ufeff", csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function getExportAppointments() {
+  if (!supabaseClient) {
+    showToast('Supabase is not connected.', 'error');
+    return [];
+  }
+
+  const { data, error } = await supabaseClient
+    .from('appointments')
+    .select(`
+      id,
+      slot_time,
+      status,
+      reason,
+      source,
+      patient_id,
+      doctor_id,
+      patients (
+        name,
+        phone,
+        email
+      ),
+      doctors (
+        name,
+        department,
+        specialty
+      )
+    `)
+    .order('slot_time', { ascending: true });
+
+  if (error) {
+    console.error('Export appointments error:', error);
+    showToast('Failed to export appointments from the database.', 'error');
+    return [];
+  }
+
+  return data || [];
+}
+
+function appointmentToCsvRow(a) {
+  const patient = a.patients?.name || 'Unknown Patient';
+  const phone = a.patients?.phone || '';
+  const email = a.patients?.email || '';
+  const doctor = a.doctors?.name || 'Unknown Doctor';
+  const department = a.doctors?.department || a.doctors?.specialty || '';
+  const slot = a.slot_time ? new Date(a.slot_time) : null;
+
+  return [
+    String(a.id || '').slice(0, 8),
+    patient,
+    phone,
+    email,
+    doctor,
+    department,
+    slot ? slot.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '',
+    slot ? slot.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) : '',
+    a.reason || 'Consultation',
+    a.status || 'booked',
+    a.source || ''
+  ];
+}
+
+async function exportAppointmentsCSV() {
+  const appointments = await getExportAppointments();
+  if (!appointments.length) return;
+
+  let rows = appointments;
+  if (currentApptFilter !== 'all') {
+    if (currentApptFilter === 'pending') {
+      rows = appointments.filter(a => ['booked', 'reschedule_pending'].includes(a.status));
+    } else {
+      rows = appointments.filter(a => a.status === currentApptFilter);
+    }
+  }
+
+  if (!rows.length) {
+    showToast('No appointments match the current filter.', 'info');
+    return;
+  }
+
+  const csvRows = [
+    ['Appointment ID', 'Patient Name', 'Phone', 'Email', 'Doctor', 'Department', 'Date', 'Time', 'Appointment Type', 'Status', 'Source'],
+    ...rows.map(appointmentToCsvRow)
+  ];
+
+  const datePart = new Date().toISOString().slice(0, 10);
+  const filterPart = currentApptFilter === 'all' ? 'all' : currentApptFilter;
+  downloadCsv(`medicare-ai-appointments-${filterPart}-${datePart}.csv`, csvRows);
+  showToast(`✅ Exported ${rows.length} appointment${rows.length === 1 ? '' : 's'}.`, 'success');
+}
+
+async function exportDashboardReport() {
+  const appointments = await getExportAppointments();
+  if (!appointments.length) return;
+
+  const today = new Date();
+  const sameDay = (value) => {
+    if (!value) return false;
+    const d = new Date(value);
+    return d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate();
+  };
+
+  const todayAppointments = appointments.filter(a => sameDay(a.slot_time));
+  const completedToday = todayAppointments.filter(a => a.status === 'completed').length;
+  const pendingToday = todayAppointments.filter(a => ['booked', 'confirmed', 'reschedule_pending'].includes(a.status)).length;
+  const missedToday = todayAppointments.filter(a => a.status === 'missed').length;
+  const cancelledToday = todayAppointments.filter(a => a.status === 'cancelled').length;
+
+  const generatedAt = today.toLocaleString('en-IN');
+  const datePart = today.toISOString().slice(0, 10);
+
+  const csvRows = [
+    ['MediCare AI — Dashboard Export'],
+    ['Generated At', generatedAt],
+    ['Report Date', today.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })],
+    [],
+    ['Dashboard Summary'],
+    ["Today's Appointments", todayAppointments.length],
+    ['Completed Today', completedToday],
+    ['Pending / Waiting Today', pendingToday],
+    ['Missed / No-Show Today', missedToday],
+    ['Cancelled Today', cancelledToday],
+    ['Total Appointments in Database', appointments.length],
+    [],
+    ['Appointments'],
+    ['Appointment ID', 'Patient Name', 'Phone', 'Email', 'Doctor', 'Department', 'Date', 'Time', 'Appointment Type', 'Status', 'Source'],
+    ...appointments.map(appointmentToCsvRow)
+  ];
+
+  downloadCsv(`medicare-ai-dashboard-report-${datePart}.csv`, csvRows);
+  showToast(`✅ Dashboard report exported (${appointments.length} appointments).`, 'success');
 }
 
 // ─── DASHBOARD ───
