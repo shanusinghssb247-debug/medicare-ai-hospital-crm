@@ -1028,9 +1028,9 @@
         <input id="reportType" class="form-input" placeholder="e.g. CBC, MRI Brain, X-Ray">
       </div>
       <div class="form-group">
-        <label class="form-label">Report File</label>
+        <label class="form-label">Report / Lab File</label>
         <input id="reportFile" class="form-input" type="file" accept=".pdf,.png,.jpg,.jpeg">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">PDF/JPG/PNG • Max 5 MB</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">PDF/JPG/PNG • Max 25 MB</div>
       </div>
       <div class="form-group">
         <label class="form-label">Doctor Notes (optional)</label>
@@ -1042,7 +1042,7 @@
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="closeModal('reportModal')">Cancel</button>
-        <button class="btn btn-primary" id="uploadReportBtn" onclick="uploadReport()">⬆️ Upload Report</button>
+        <button class="btn btn-primary" id="uploadReportBtn" onclick="uploadReport()">⬆️ Upload Report / Lab File</button>
       </div>
     </div>
   </div>
@@ -1767,7 +1767,8 @@ async function renderReports() {
       const ready = r.is_ready !== false;
       const path = r.report_url || '';
       const fileLabel = path ? String(path).split('/').pop() : 'Metadata only';
-      const safeFileLabel = fileLabel.replace(/'/g, "\\'");
+      const safeFileLabel = String(fileLabel).replace(/'/g, "\\'");
+      const safePath = String(path).replace(/'/g, "\\'");
 
       return `
         <tr>
@@ -1781,7 +1782,7 @@ async function renderReports() {
           <td>${r.doctor_notes ? '<span class="badge blue">Notes ✓</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
           <td>
             ${path
-              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="showToast('${safeFileLabel} is saved in Supabase Storage.','success')">📄 Saved</button>`
+              ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="openReportFile('${safePath}','${safeFileLabel}')">📄 View File</button>`
               : '<span style="color:var(--text-muted);font-size:12px">—</span>'}
           </td>
           <td>
@@ -1799,6 +1800,20 @@ async function renderReports() {
         </td>
       </tr>
     `;
+  }
+}
+
+async function openReportFile(storagePath, fileName) {
+  if (!storagePath) { showToast('No file is attached to this report.', 'error'); return; }
+  if (!window.supabaseClient) { showToast('Supabase client is not initialized.', 'error'); return; }
+  try {
+    showToast('Opening report file...', 'info');
+    const { data, error } = await supabaseClient.storage.from('hospital-reports').createSignedUrl(storagePath, 300);
+    if (error || !data?.signedUrl) throw new Error(error?.message || 'Could not create a secure file link.');
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  } catch (error) {
+    console.error('REPORT FILE OPEN ERROR:', error);
+    showToast(`Could not open ${fileName || 'report file'}: ${error?.message || 'Unknown error'}`, 'error');
   }
 }
 
@@ -2270,8 +2285,8 @@ async function uploadReport() {
     return;
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('The report file must be smaller than 5 MB.', 'error');
+  if (file.size > 25 * 1024 * 1024) {
+    showToast('The report/lab file must be 25 MB or smaller.', 'error');
     return;
   }
 
@@ -2300,7 +2315,14 @@ async function uploadReport() {
       });
 
     if (storageError) {
-      throw new Error(`Report file upload failed: ${storageError.message}`);
+      const msg = String(storageError.message || 'Unknown storage error');
+      if (/bucket.*not found/i.test(msg)) {
+        throw new Error('Report/Lab storage bucket is missing. Create the Supabase bucket named hospital-reports, then upload again.');
+      }
+      if (/size|exceed|payload|too large/i.test(msg)) {
+        throw new Error('Report/Lab file is too large for the current Supabase Storage limit. Use a file up to 25 MB or increase the bucket limit.');
+      }
+      throw new Error(`Report/Lab file upload failed: ${msg}`);
     }
 
     const { data: report, error: reportError } = await supabaseClient
@@ -2331,7 +2353,7 @@ async function uploadReport() {
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = '⬆️ Upload Report';
+      button.textContent = '⬆️ Upload Report / Lab File';
     }
   }
 }
