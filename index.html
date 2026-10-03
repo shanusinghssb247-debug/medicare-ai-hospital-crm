@@ -501,7 +501,7 @@
           <div class="page-sub">Today's overview — Monday, 17 August 2026</div>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="showToast('Downloading report...', 'info')">📥 Export</button>
+          <button class="btn btn-ghost" onclick="exportAppointmentsCSV()">📥 Export</button>
           <button class="btn btn-ghost" onclick="refreshDashboard()">🔄 Refresh</button>
         </div>
       </div>
@@ -577,7 +577,15 @@
 
         <!-- Activity + Alerts -->
         <div style="display:flex;flex-direction:column;gap:20px">
-
+          <div class="card">
+            <div class="card-header"><div class="card-title">🚨 Critical Alerts</div></div>
+            <div class="card-body" style="padding:16px">
+              <div class="alert red">⚠️ Priya Verma — Critical CBC report. AI call triggered + doctor notified.</div>
+              <div class="alert yellow">📞 Rahul Sharma — 2nd missed appointment. Manual call needed.</div>
+              <div class="alert blue">💬 12 WhatsApp messages in AI agent queue right now.</div>
+              <div class="alert green">✅ Supabase DB — All tables healthy. Last sync: 2 min ago.</div>
+            </div>
+          </div>
 
           <div class="card">
             <div class="card-header"><div class="card-title">⚡ Live Activity</div></div>
@@ -681,7 +689,7 @@
           <div class="card-title">📋 Appointment List</div>
           <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:12px;color:var(--text-muted)">17 Aug 2026</span>
-            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="showToast('Exporting...', 'success')">📥 CSV</button>
+            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="exportAppointmentsCSV()">📥 CSV</button>
           </div>
         </div>
         <div class="table-wrap">
@@ -1192,7 +1200,7 @@ const mockAutomation = [
 const activityItems = [
   {icon:'💬', color:'rgba(59,130,246,0.15)', text:'AI confirmed Rahul Sharma appointment on WhatsApp', time:'2 min ago'},
   {icon:'📞', color:'rgba(16,185,129,0.15)', text:'AI call: Mohit Thakur confirmed the 2:30 PM slot', time:'8 min ago'},
-  {icon:'🧪', color:'rgba(239,68,68,0.15)', text:'Priya Verma CBC report received — report added to records', time:'15 min ago'},
+  {icon:'🧪', color:'rgba(239,68,68,0.15)', text:'CRITICAL: Priya Verma CBC report — doctor alert sent', time:'15 min ago'},
   {icon:'⭐', color:'rgba(245,158,11,0.15)', text:'Anita Mishra ne 5★ feedback diya', time:'30 min ago'},
   {icon:'🔄', color:'rgba(139,92,246,0.15)', text:'Deepak Yadav appointment reschedule request received', time:'45 min ago'},
 ];
@@ -2380,6 +2388,27 @@ document.getElementById('topbar-date').textContent = d.toLocaleDateString('en-IN
 
 // ─── INIT ───
 renderDashboard();
+
+function exportAppointmentsCSV() {
+  const rows = Array.from(document.querySelectorAll('table tbody tr'));
+  if (!rows.length) {
+    showToast('No appointments to export', 'info');
+    return;
+  }
+  const headers = Array.from(document.querySelectorAll('table thead th')).map(th => th.innerText.trim());
+  const data = rows.map(row => Array.from(row.querySelectorAll('td')).map(td => '"' + td.innerText.trim().replace(/"/g, '""') + '"'));
+  const csv = [headers.map(h => '"' + h.replace(/"/g, '""') + '"').join(','), ...data.map(row => row.join(','))].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'medicare-appointments-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast('CSV downloaded successfully', 'success');
+}
 </script>
 </body>
 </html>
