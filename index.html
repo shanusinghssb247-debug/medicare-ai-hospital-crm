@@ -370,6 +370,16 @@
   .alert.yellow { background: var(--yellow-bg); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
   .alert.green { background: var(--green-bg); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
   .alert.blue { background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
+  .workflow-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .workflow-item { background:var(--card-hover); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .workflow-item-head { display:flex; align-items:center; gap:9px; }
+  .workflow-item-title { font-size:13px; font-weight:600; flex:1; }
+  .workflow-item-sub { font-size:11px; color:var(--text-muted); margin-top:5px; line-height:1.45; }
+  .workflow-status { font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; background:var(--green-bg); color:var(--green); }
+  .workflow-status.paused { background:var(--yellow-bg); color:var(--yellow); }
+  .workflow-status.error { background:var(--red-bg); color:var(--red); }
+  .health-ok { color:var(--green); }
+  @media (max-width: 900px) { .workflow-grid { grid-template-columns:1fr; } }
 
   /* ─── TABS ─── */
   .tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg); border-radius: 10px; border: 1px solid var(--border); width: fit-content; margin-bottom: 20px; }
@@ -812,6 +822,14 @@
           </div>
         </div>
       </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <div class="card-title">🧑‍💼 Open Escalations (Human Handoff)</div>
+          <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="renderEscalations()">🔄 Refresh</button>
+        </div>
+        <div id="escalationList"></div>
+      </div>
     </div>
 
     <!-- ═══════════════════════════════ VOICE CALLS PAGE ═══════════════════════════════ -->
@@ -824,15 +842,20 @@
         <button class="btn btn-primary" onclick="triggerManualCall()">📞 Manual Call Trigger</button>
       </div>
 
+      <div class="alert yellow">
+        <span>⏸</span>
+        <div>AI voice calling is currently <strong>paused</strong> (voice nodes are disabled in the HOSPITAL CRM workflow). Reminders go out on WhatsApp only. Calls resume once the voice server is connected and the nodes are enabled. After 2 unanswered attempts, the front desk gets an email to call manually.</div>
+      </div>
+
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card blue"><div class="stat-icon">📞</div><div class="stat-value">89</div><div class="stat-label">Calls Today</div></div>
-        <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value">67%</div><div class="stat-label">Connected</div></div>
-        <div class="stat-card yellow"><div class="stat-icon">🔄</div><div class="stat-value">21</div><div class="stat-label">Rescheduled via Call</div></div>
-        <div class="stat-card red"><div class="stat-icon">⚠️</div><div class="stat-value">8</div><div class="stat-label">Manual Alert Sent</div></div>
+        <div class="stat-card blue"><div class="stat-icon">📞</div><div class="stat-value" id="voiceStatToday">0</div><div class="stat-label">Calls Today</div></div>
+        <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="voiceStatConnected">—</div><div class="stat-label">Connected</div></div>
+        <div class="stat-card yellow"><div class="stat-icon">🔄</div><div class="stat-value" id="voiceStatResched">0</div><div class="stat-label">Rescheduled via Call</div></div>
+        <div class="stat-card red"><div class="stat-icon">⚠️</div><div class="stat-value" id="voiceStatManual">0</div><div class="stat-label">Manual Alert Needed (2 attempts)</div></div>
       </div>
 
       <div class="card">
-        <div class="card-header"><div class="card-title">📞 Call Log — Today</div></div>
+        <div class="card-header"><div class="card-title">📞 Call Log — Recent</div></div>
         <div id="callLogTable"></div>
       </div>
     </div>
@@ -873,10 +896,10 @@
       </div>
 
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card yellow"><div class="stat-icon">⭐</div><div class="stat-value">4.6</div><div class="stat-label">Average Rating</div></div>
-        <div class="stat-card green"><div class="stat-icon">😊</div><div class="stat-value">82%</div><div class="stat-label">Positive (4-5★)</div></div>
-        <div class="stat-card red"><div class="stat-icon">😟</div><div class="stat-value">7</div><div class="stat-label">Unhappy (≤3★)</div><div class="stat-change down">Auto-apology sent</div></div>
-        <div class="stat-card blue"><div class="stat-icon">📝</div><div class="stat-value">143</div><div class="stat-label">Total Responses</div></div>
+        <div class="stat-card yellow"><div class="stat-icon">⭐</div><div class="stat-value" id="fbStatAvg">—</div><div class="stat-label">Average Rating</div></div>
+        <div class="stat-card green"><div class="stat-icon">😊</div><div class="stat-value" id="fbStatPositive">—</div><div class="stat-label">Positive (4-5★)</div></div>
+        <div class="stat-card red"><div class="stat-icon">😟</div><div class="stat-value" id="fbStatUnhappy">0</div><div class="stat-label">Unhappy (≤3★)</div><div class="stat-change down">Auto-apology sent</div></div>
+        <div class="stat-card blue"><div class="stat-icon">📝</div><div class="stat-value" id="fbStatTotal">0</div><div class="stat-label">Total Responses</div></div>
       </div>
 
       <div class="card">
@@ -923,20 +946,51 @@
       <div class="page-header">
         <div>
           <div class="page-h1">⚡ Automation Logs</div>
-          <div class="page-sub">n8n workflow execution log — all 5 automation modules</div>
+          <div class="page-sub">n8n workflow execution log — HOSPITAL CRM + Error &amp; Reports workflows</div>
         </div>
         <button class="btn btn-ghost" onclick="showToast('Refreshing logs...','info')">🔄 Refresh</button>
       </div>
 
       <div class="kpi-row">
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">3,847</div><div class="kpi-lbl">Total Executions Today</div></div>
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">99.2%</div><div class="kpi-lbl">Success Rate</div></div>
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--red)">30</div><div class="kpi-lbl">Errors (Auto-Alerted)</div></div>
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">4</div><div class="kpi-lbl">Active Workflows</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">10</div><div class="kpi-lbl">Automation Modules</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--yellow)">1</div><div class="kpi-lbl">Paused (Voice Calling)</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">Email</div><div class="kpi-lbl">Error Alerts Enabled</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">2</div><div class="kpi-lbl">Active Workflows</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🧩 Hospital AI Workflow Coverage</div>
+            <span class="badge confirmed">Configured in n8n</span>
+          </div>
+          <div class="card-body">
+            <div id="workflowCoverage" class="workflow-grid"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🛡️ System Health & Error Workflow</div>
+            <span class="badge confirmed">Auto-alert</span>
+          </div>
+          <div class="card-body">
+            <div class="alert green" style="margin-bottom:12px">
+              <span>✓</span>
+              <div><strong>Health checks:</strong> website, Supabase patient database, active doctors, doctor fees and unanswered escalations are checked every 15 minutes.</div>
+            </div>
+            <div class="alert blue" style="margin-bottom:12px">
+              <span>✉️</span>
+              <div><strong>Error workflow:</strong> workflow failures are converted into an alert message and emailed to the configured admin address.</div>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted)">
+              Management reports run daily and weekly and include appointments, patients, feedback, lab reports, escalations, AI calls, system errors and website enquiries.
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="card">
-        <div class="card-header"><div class="card-title">⚡ Recent Workflow Executions</div></div>
+        <div class="card-header"><div class="card-title">⚡ Workflow Modules</div></div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Time</th><th>Workflow</th><th>Trigger</th><th>Node</th><th>Status</th><th>Duration</th></tr></thead>
@@ -982,10 +1036,12 @@
           <div class="card-header"><div class="card-title">🤖 AI Automation Config</div></div>
           <div class="card-body">
             <div class="form-group"><label class="form-label">WhatsApp Verify Token</label><input class="form-input" value="••••••••••••" type="password"></div>
-            <div class="form-group"><label class="form-label">Gemini AI Model</label><select class="form-select"><option>gemini-1.5-pro</option><option>gemini-1.5-flash</option></select></div>
-            <div class="form-group"><label class="form-label">Reminder Window (2h before)</label><input class="form-input" value="120 minutes"></div>
-            <div class="form-group"><label class="form-label">Max Retry Calls</label><input class="form-input" value="3" type="number"></div>
-            <div class="form-group"><label class="form-label">Error Alert Email</label><input class="form-input" value="tech@medicare-bhopal.com"></div>
+            <div class="form-group"><label class="form-label">Gemini AI Model</label><select class="form-select"><option>gemini-3.8-flash</option><option>gemini-1.5-pro</option><option>gemini-1.5-flash</option></select></div>
+            <div class="form-group"><label class="form-label">Reminder Windows (before appointment)</label><input class="form-input" value="24 hours + 2 hours"></div>
+            <div class="form-group"><label class="form-label">Max Retry Calls</label><input class="form-input" value="2" type="number"></div>
+            <div class="form-group"><label class="form-label">Error Alert Email</label><input class="form-input" value="shanusinghssb247@gmail.com"></div>
+            <div class="form-group"><label class="form-label">Management Reports (email)</label><input class="form-input" value="Daily 10:00 PM • Weekly Saturday 10:00 PM (IST)" readonly></div>
+            <div class="form-group"><label class="form-label">System Health Checklist</label><input class="form-input" value="Every 15 minutes (alerts only on status change)" readonly></div>
             <button class="btn btn-primary" onclick="showToast('AI configuration updated!','success')">💾 Save Config</button>
           </div>
         </div>
@@ -1231,16 +1287,17 @@ const mockFeedback = [
 ];
 
 const mockAutomation = [
-  {time:'10:32 AM', workflow:'WhatsApp AI Agent', trigger:'WhatsApp Inbound POST', node:'Patient WhatsApp AI Agent', status:'success', dur:'2.1s'},
-  {time:'10:31 AM', workflow:'Appointment Reminder', trigger:'Schedule (15 min)', node:'Send WhatsApp 2h Reminder', status:'success', dur:'0.8s'},
-  {time:'10:30 AM', workflow:'Report Notification', trigger:'Report Ready Webhook', node:'Send WhatsApp Report', status:'success', dur:'1.2s'},
-  {time:'10:28 AM', workflow:'WhatsApp AI Agent', trigger:'WhatsApp Inbound POST', node:'Book Appointment Tool', status:'success', dur:'3.4s'},
-  {time:'10:25 AM', workflow:'Voice Call Status', trigger:'Call Callback Webhook', node:'Mark Confirmed Via Call', status:'success', dur:'0.5s'},
-  {time:'10:20 AM', workflow:'Feedback Scanner', trigger:'Schedule (Hourly)', node:'Send WhatsApp Feedback', status:'success', dur:'1.8s'},
-  {time:'10:15 AM', workflow:'WhatsApp AI Agent', trigger:'WhatsApp Inbound POST', node:'Escalate to Front Desk', status:'success', dur:'0.9s'},
-  {time:'10:10 AM', workflow:'Missed Appt Sweep', trigger:'Schedule (Daily 7PM)', node:'Trigger AI Follow-up Call', status:'error', dur:'0.3s'},
-  {time:'10:05 AM', workflow:'Error Handler', trigger:'Error Trigger', node:'Send Error Alert Email', status:'success', dur:'1.1s'},
-  {time:'10:00 AM', workflow:'WhatsApp AI Agent', trigger:'WhatsApp Inbound POST', node:'Check Pending Feedback', status:'success', dur:'0.7s'},
+  {time:'Live', workflow:'WhatsApp AI Agent', trigger:'WhatsApp Inbound (POST)', node:'Patient WhatsApp AI Agent / Gemini', status:'success', dur:'Configured'},
+  {time:'Every 15 min', workflow:'Appointment Reminder', trigger:'Reminder Scanner', node:'24h / 2h WhatsApp Reminder', status:'success', dur:'Scheduled'},
+  {time:'Daily 7 PM IST', workflow:'Missed Appointment Sweep', trigger:'Schedule Trigger', node:'Mark Appointment Missed (AI call paused)', status:'success', dur:'Scheduled'},
+  {time:'Paused', workflow:'Voice Call Status', trigger:'Voice Call Status Callback', node:'Route By Call Outcome', status:'paused', dur:'Disabled'},
+  {time:'Live', workflow:'Report Notification', trigger:'Report Ready (POST)', node:'Send WhatsApp Report Notification', status:'success', dur:'Webhook'},
+  {time:'Hourly', workflow:'Feedback Scanner', trigger:'Feedback Request Scanner', node:'Send WhatsApp Feedback Request', status:'success', dur:'Scheduled'},
+  {time:'Live', workflow:'Front Desk Visit Outcome', trigger:'mark-visit form', node:'Update Appointment Status (Supabase)', status:'success', dur:'Form'},
+  {time:'Daily 10 PM / Weekly Sat', workflow:'Management Reports', trigger:'Daily reports / Weekly reports', node:'Compile Management Report', status:'success', dur:'Scheduled'},
+  {time:'Live', workflow:'Hospital Enquiry', trigger:'Enquiry Form', node:'Store Enquiry + CRM Patient', status:'success', dur:'Form'},
+  {time:'Every 15 min', workflow:'Hospital Health Checklist', trigger:'Health Checklist', node:'Evaluate Checklist', status:'success', dur:'Scheduled'},
+  {time:'On error', workflow:'Error Workflow', trigger:'Error Trigger', node:'Send Error Alert Email', status:'success', dur:'Automatic'},
 ];
 
 const activityItems = [
@@ -1619,7 +1676,7 @@ async function renderAppointments() {
 
     return `
       <tr>
-        <td><span class="tag">${String(a.id).slice(0,8)}</span></td>
+        <td><span class="tag" style="cursor:pointer" title="Click to copy full appointment ID" onclick="copyApptId('${a.id}')">${String(a.id).slice(0,8)}</span></td>
         <td>
           <strong>${patient}</strong>
           <div style="font-size:11px;color:var(--text-muted)">${phone}</div>
@@ -1646,6 +1703,11 @@ async function renderAppointments() {
             onclick="cancelAppt('${a.id}','${patient}')">❌</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
             onclick="showToast('Reminder sent to ${patient}!','success')">🔔</button>
+          ${['confirmed','booked','reschedule_pending','missed'].includes(a.status) ? `
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px" title="Mark visit completed"
+            onclick="markVisitOutcome('${a.id}','completed','${String(patient).replace(/'/g, "\\'")}')">✅</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px" title="Mark no-show"
+            onclick="markVisitOutcome('${a.id}','missed','${String(patient).replace(/'/g, "\\'")}')">🚫</button>` : ''}
         </td>
       </tr>
     `;
@@ -1657,6 +1719,46 @@ function filterApptTab(el, filter) {
   el.classList.add('active');
   currentApptFilter = filter;
   renderAppointments();
+}
+
+// Front desk: mark visit outcome (same update as the "Mark Visit Outcome" n8n form)
+function copyApptId(id) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(id).then(
+      () => showToast('Appointment ID copied.', 'success'),
+      () => showToast('Could not copy. ID: ' + id, 'info')
+    );
+  } else {
+    showToast('Appointment ID: ' + id, 'info');
+  }
+}
+
+async function markVisitOutcome(id, outcome, name) {
+  const label = outcome === 'completed' ? 'Completed' : 'No-show';
+  if (!confirm(`Mark ${name}'s appointment as ${label}?`)) return;
+  if (!window.supabaseClient) {
+    showToast('Supabase client is not initialized.', 'error');
+    return;
+  }
+  try {
+    const { error } = await supabaseClient
+      .from('appointments')
+      .update({
+        status: outcome,
+        completed_at: outcome === 'completed' ? new Date().toISOString() : null
+      })
+      .eq('id', id);
+    if (error) throw new Error(error.message);
+    showToast(outcome === 'completed'
+      ? `${name} marked Completed. Counted in revenue; a feedback request goes out automatically.`
+      : `${name} marked No-show.`, 'success');
+    await renderAppointments();
+    await renderDashAppts();
+    loadNotifications();
+  } catch (error) {
+    console.error('MARK VISIT OUTCOME ERROR:', error);
+    showToast(error?.message || 'Could not update the appointment.', 'error');
+  }
 }
 
 function cancelAppt(id, name) {
@@ -1739,6 +1841,73 @@ function showPatientDetail(name) {
 function renderWhatsApp() {
   renderWAConversations();
   renderWACategories();
+  renderEscalations();
+}
+
+// Escalations raised by the WhatsApp AI agent (escalations table)
+async function renderEscalations() {
+  const el = document.getElementById('escalationList');
+  if (!el) return;
+  if (!window.supabaseClient) {
+    el.innerHTML = '<div class="notification-empty">Supabase is not connected.</div>';
+    return;
+  }
+  try {
+    const { data, error } = await supabaseClient
+      .from('escalations')
+      .select('id, patient_phone, reason, priority, resolved, created_at')
+      .eq('resolved', false)
+      .order('created_at', { ascending: false })
+      .limit(25);
+    if (error) throw new Error(error.message);
+
+    if (!data || !data.length) {
+      el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px">✅ No open escalations.</div>';
+      return;
+    }
+
+    const phones = [...new Set(data.map(e => e.patient_phone).filter(Boolean))];
+    const names = {};
+    if (phones.length) {
+      const { data: pts } = await supabaseClient.from('patients').select('name, phone').in('phone', phones);
+      (pts || []).forEach(p => { names[p.phone] = p.name; });
+    }
+
+    const prioClass = { critical: 'cancelled', high: 'cancelled', normal: 'pending', low: 'confirmed' };
+    el.innerHTML = data.map(e => {
+      const pr = e.priority || 'normal';
+      const who = names[e.patient_phone] || 'Unknown Patient';
+      return `
+        <div class="call-item">
+          <div class="call-avatar" style="background:var(--yellow-bg);color:var(--yellow)">🧑‍💼</div>
+          <div class="call-info">
+            <div class="call-name">${who}</div>
+            <div class="call-detail">${e.patient_phone || '—'} • ${e.reason || 'No reason given'}</div>
+          </div>
+          <div class="call-status">
+            <span class="badge ${prioClass[pr] || 'pending'}">${pr}</span>
+            <div class="call-time">${relativeNotificationTime(e.created_at)}</div>
+          </div>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:12px" onclick="resolveEscalation('${e.id}')">✅ Resolve</button>
+        </div>`;
+    }).join('');
+  } catch (error) {
+    console.error('ESCALATIONS LOAD ERROR:', error);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:13px">Could not load escalations.</div>';
+  }
+}
+
+async function resolveEscalation(id) {
+  try {
+    const { error } = await supabaseClient.from('escalations').update({ resolved: true }).eq('id', id);
+    if (error) throw new Error(error.message);
+    showToast('Escalation marked as resolved.', 'success');
+    renderEscalations();
+    loadNotifications();
+  } catch (error) {
+    console.error('RESOLVE ESCALATION ERROR:', error);
+    showToast(error?.message || 'Could not resolve escalation.', 'error');
+  }
 }
 
 function renderWAConversations() {
@@ -1784,25 +1953,75 @@ function renderWACategories() {
 }
 
 // ─── VOICE CALLS ───
-function renderVoice() {
+async function renderVoice() {
   const el = document.getElementById('callLogTable');
   if (!el) return;
-  const outcomeMap = {confirmed:'✅ Confirmed', rescheduled:'🔄 Rescheduled', cancelled:'❌ Cancelled', no_answer:'📵 No Answer'};
-  const outcomeColor = {confirmed:'var(--green)', rescheduled:'var(--cyan)', cancelled:'var(--red)', no_answer:'var(--yellow)'};
-  el.innerHTML = mockCalls.map(c => `
-    <div class="call-item">
-      <div class="call-avatar" style="background:${c.color}22;color:${c.color}">${c.initials}</div>
-      <div class="call-info">
-        <div class="call-name">${c.patient}</div>
-        <div class="call-detail">${c.phone} • ${c.type}</div>
-      </div>
-      <div class="call-status">
-        <div class="call-outcome" style="color:${outcomeColor[c.outcome]}">${outcomeMap[c.outcome]}</div>
-        <div class="call-time">${c.time} • Attempt ${c.retry}</div>
-      </div>
-      <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:12px" onclick="showToast('Triggering a manual call for ${c.patient}...','info')">📞 Retry</button>
-    </div>
-  `).join('');
+  const outcomeMap = {confirmed:'✅ Confirmed', reschedule_requested:'🔄 Reschedule Requested', cancelled:'❌ Cancelled', no_answer:'📵 No Answer'};
+  const outcomeColor = {confirmed:'var(--green)', reschedule_requested:'var(--cyan)', cancelled:'var(--red)', no_answer:'var(--yellow)'};
+  const typeMap = {reminder_2h:'2h Reminder', missed_followup:'Missed Appt Follow-up', critical_report:'Critical Report Call', status_callback:'Call Result'};
+
+  if (!window.supabaseClient) {
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)">Supabase client is not initialized.</div>';
+    return;
+  }
+
+  try {
+    const { data: logs, error } = await supabaseClient
+      .from('call_logs')
+      .select('id, patient_phone, call_type, status, outcome, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+
+    const { count: manualCount } = await supabaseClient
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .gte('retry_count', 2);
+
+    const todayKey = new Date().toDateString();
+    const todayLogs = (logs || []).filter(l => new Date(l.created_at).toDateString() === todayKey);
+    const results = todayLogs.filter(l => l.call_type === 'status_callback');
+    const connected = results.filter(l => l.outcome && l.outcome !== 'no_answer').length;
+    const setText = (id, v) => { const n = document.getElementById(id); if (n) n.textContent = v; };
+    setText('voiceStatToday', todayLogs.length);
+    setText('voiceStatConnected', results.length ? Math.round(connected / results.length * 100) + '%' : '—');
+    setText('voiceStatResched', todayLogs.filter(l => l.outcome === 'reschedule_requested').length);
+    setText('voiceStatManual', manualCount || 0);
+
+    if (!logs || !logs.length) {
+      el.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted);font-size:13px">No AI calls logged yet. Voice calling is paused.</div>';
+      return;
+    }
+
+    const phones = [...new Set(logs.map(l => l.patient_phone).filter(Boolean))];
+    const names = {};
+    if (phones.length) {
+      const { data: pts } = await supabaseClient.from('patients').select('name, phone').in('phone', phones);
+      (pts || []).forEach(p => { names[p.phone] = p.name; });
+    }
+
+    el.innerHTML = logs.map(l => {
+      const name = names[l.patient_phone] || 'Unknown Patient';
+      const initials = name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'PT';
+      const out = l.outcome || null;
+      const when = new Date(l.created_at).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+      return `
+        <div class="call-item">
+          <div class="call-avatar" style="background:var(--accent-glow);color:var(--accent-light)">${initials}</div>
+          <div class="call-info">
+            <div class="call-name">${name}</div>
+            <div class="call-detail">${l.patient_phone || '—'} • ${typeMap[l.call_type] || l.call_type || 'Call'}</div>
+          </div>
+          <div class="call-status">
+            <div class="call-outcome" style="color:${out ? (outcomeColor[out] || 'var(--text-soft)') : 'var(--text-muted)'}">${out ? (outcomeMap[out] || out) : (l.status === 'queued' ? '⏳ Queued' : (l.status || '—'))}</div>
+            <div class="call-time">${when}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (error) {
+    console.error('VOICE LOAD ERROR:', error);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:13px">Could not load call logs.</div>';
+  }
 }
 
 // ─── REPORTS ───
@@ -1824,6 +2043,7 @@ async function renderReports() {
         report_type,
         report_url,
         is_ready,
+        is_critical,
         doctor_notes,
         created_at,
         ready_at,
@@ -1865,7 +2085,7 @@ async function renderReports() {
           </td>
           <td>${r.report_type || 'Report'}</td>
           <td>${date}</td>
-          <td>${ready ? '<span class="badge confirmed">Ready</span>' : '<span class="badge pending">Pending</span>'}</td>
+          <td>${ready ? '<span class="badge confirmed">Ready</span>' : '<span class="badge pending">Pending</span>'}${r.is_critical ? ' <span class="badge cancelled">🚨 Critical</span>' : ''}</td>
           <td>${r.doctor_notes ? '<span class="badge blue">Notes ✓</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
           <td>
             ${path
@@ -2072,29 +2292,84 @@ async function openReportFile(storagePath, fileName, patientId) {
 }
 
 // ─── FEEDBACK ───
-function renderFeedback() {
+async function renderFeedback() {
   const el = document.getElementById('feedbackTable');
   if (!el) return;
-  el.innerHTML = `
-    <div class="table-wrap">
-    <table>
-      <thead><tr><th>Patient</th><th>Doctor</th><th>Rating</th><th>Comment</th><th>Date</th><th>Dept</th><th>Action</th></tr></thead>
-      <tbody>
-        ${mockFeedback.map(f => `
-          <tr>
-            <td><strong>${f.patient}</strong></td>
-            <td>${f.doctor}</td>
-            <td><div class="stars">${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</div></td>
-            <td style="max-width:220px;font-size:12px">${f.comment}</td>
-            <td>${f.date}</td>
-            <td><span class="tag">${f.dept}</span></td>
-            <td>${f.rating <= 3 ? '<span class="badge cancelled">Apology Sent</span>' : '<span class="badge confirmed">Google Review</span>'}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-    </div>
-  `;
+
+  if (!window.supabaseClient) {
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)">Supabase client is not initialized.</div>';
+    return;
+  }
+
+  try {
+    const { data: rows, error } = await supabaseClient
+      .from('feedback')
+      .select('id, appointment_id, patient_id, patient_phone, rating, requested_at, responded_at')
+      .order('requested_at', { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+
+    const list = rows || [];
+    const rated = list.filter(f => f.rating !== null && f.rating !== undefined);
+    const setText = (id, v) => { const n = document.getElementById(id); if (n) n.textContent = v; };
+    setText('fbStatTotal', rated.length);
+    setText('fbStatAvg', rated.length ? (rated.reduce((a, f) => a + Number(f.rating), 0) / rated.length).toFixed(1) : '—');
+    setText('fbStatPositive', rated.length ? Math.round(rated.filter(f => Number(f.rating) >= 4).length / rated.length * 100) + '%' : '—');
+    setText('fbStatUnhappy', rated.filter(f => Number(f.rating) <= 3).length);
+
+    if (!list.length) {
+      el.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted);font-size:13px">No feedback requests yet. They are sent automatically 2 hours after a visit is marked Completed.</div>';
+      return;
+    }
+
+    // Look up patient / doctor via the appointment, same way the dashboard does
+    const patientIds = [...new Set(list.map(f => f.patient_id).filter(Boolean))];
+    const apptIds = [...new Set(list.map(f => f.appointment_id).filter(Boolean))];
+    const patientMap = {}, apptMap = {}, doctorMap = {};
+    if (patientIds.length) {
+      const { data } = await supabaseClient.from('patients').select('id, name').in('id', patientIds);
+      (data || []).forEach(p => { patientMap[p.id] = p; });
+    }
+    if (apptIds.length) {
+      const { data } = await supabaseClient.from('appointments').select('id, doctor_id').in('id', apptIds);
+      (data || []).forEach(a => { apptMap[a.id] = a; });
+      const doctorIds = [...new Set((data || []).map(a => a.doctor_id).filter(Boolean))];
+      if (doctorIds.length) {
+        const { data: docs } = await supabaseClient.from('doctors').select('id, name, department, specialty').in('id', doctorIds);
+        (docs || []).forEach(d => { doctorMap[d.id] = d; });
+      }
+    }
+
+    el.innerHTML = `
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Patient</th><th>Doctor</th><th>Rating</th><th>Comment</th><th>Date</th><th>Dept</th><th>Action</th></tr></thead>
+        <tbody>
+          ${list.map(f => {
+            const doc = doctorMap[(apptMap[f.appointment_id] || {}).doctor_id] || {};
+            const hasRating = f.rating !== null && f.rating !== undefined;
+            const r = Number(f.rating);
+            const dateVal = f.responded_at || f.requested_at;
+            const dateText = dateVal ? new Date(dateVal).toLocaleDateString('en-IN', { day:'2-digit', month:'short' }) : '—';
+            return `
+            <tr>
+              <td><strong>${(patientMap[f.patient_id] || {}).name || f.patient_phone || 'Unknown Patient'}</strong></td>
+              <td>${doc.name || '—'}</td>
+              <td>${hasRating ? `<div class="stars">${'★'.repeat(r)}${'☆'.repeat(5 - r)}</div>` : '<span style="color:var(--text-muted);font-size:12px">Awaiting reply</span>'}</td>
+              <td style="max-width:220px;font-size:12px;color:var(--text-muted)">${hasRating ? 'Rating only (1–5 via WhatsApp)' : '—'}</td>
+              <td>${dateText}</td>
+              <td><span class="tag">${doc.department || doc.specialty || '—'}</span></td>
+              <td>${!hasRating ? '<span class="badge pending">Requested</span>' : r <= 3 ? '<span class="badge cancelled">Apology Sent + Front Desk Alerted</span>' : '<span class="badge confirmed">Google Review Requested</span>'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      </div>
+    `;
+  } catch (error) {
+    console.error('FEEDBACK LOAD ERROR:', error);
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red);font-size:13px">Failed to load feedback.</div>';
+  }
 }
 
 // ─── ANALYTICS ───
@@ -2142,8 +2417,38 @@ function renderAnalytics() {
   `).join('');
 }
 
+// ─── N8N WORKFLOW COVERAGE (from HOSPITAL CRM + Error workflow) ───
+const workflowCoverage = [
+  {icon:'💬', title:'WhatsApp Inbound + AI Agent', sub:'Meta verification, patient upsert, feedback replies, Gemini AI agent, booking, reschedule, cancel, report status and human escalation.', status:'Live'},
+  {icon:'⏰', title:'Appointment Reminders', sub:'Every 15 minutes: 24h and 2h reminder windows with WhatsApp reminders. The 2h AI call trigger is paused until the voice server is connected.', status:'Live'},
+  {icon:'📞', title:'Missed Appointment + Voice Callback', sub:'Daily missed-appointment sweep, AI follow-up call, call result logging, retry handling and reschedule/cancel/confirm outcomes. Voice nodes are currently disabled; missed visits are still marked on the sweep.', status:'Voice Paused'},
+  {icon:'🧪', title:'Reports & Critical Reports', sub:'Report-ready webhook, secure token, report record, patient-friendly Gemini summary, WhatsApp notification and critical-report alert/call.', status:'Live'},
+  {icon:'⭐', title:'Feedback & Reviews', sub:'Hourly scanner for completed visits, WhatsApp feedback request, rating storage, unhappy-patient escalation and Google review request.', status:'Live'},
+  {icon:'🧾', title:'Front Desk Visit Outcome', sub:'Mark an appointment Completed or No-show; completed visits update completion time for downstream reporting and feedback.', status:'Live'},
+  {icon:'📊', title:'Daily / Weekly Management Reports', sub:'Scheduled management reports compile appointments, revenue, patients, feedback, reports, escalations, calls, errors and enquiries.', status:'Live'},
+  {icon:'🌐', title:'Hospital Enquiry CRM', sub:'Public enquiry form stores name, phone, email, department and message, sends confirmation email and adds the enquirer to CRM patients.', status:'Live'},
+  {icon:'🛡️', title:'Separate Error Workflow', sub:'Error Trigger → Build Alert Message → Send Error Alert Email for workflow failures.', status:'Live'},
+  {icon:'❤️', title:'Hospital Health Checklist', sub:'Every 15 minutes checks website, Supabase, active doctors, doctor fees and overdue unanswered escalations; alerts only when status changes.', status:'Live'}
+];
+
+function renderWorkflowCoverage() {
+  const el = document.getElementById('workflowCoverage');
+  if (!el) return;
+  el.innerHTML = workflowCoverage.map(w => `
+    <div class="workflow-item">
+      <div class="workflow-item-head">
+        <span style="font-size:17px">${w.icon}</span>
+        <div class="workflow-item-title">${w.title}</div>
+        <span class="workflow-status${/paused/i.test(w.status) ? ' paused' : ''}">${w.status}</span>
+      </div>
+      <div class="workflow-item-sub">${w.sub}</div>
+    </div>
+  `).join('');
+}
+
 // ─── AUTOMATION ───
 function renderAutomation() {
+  renderWorkflowCoverage();
   const tbody = document.getElementById('automationTable');
   if (!tbody) return;
   tbody.innerHTML = mockAutomation.map(a => `
@@ -2152,7 +2457,7 @@ function renderAutomation() {
       <td><strong>${a.workflow}</strong></td>
       <td style="font-size:12px">${a.trigger}</td>
       <td style="font-size:12px">${a.node}</td>
-      <td>${a.status === 'success' ? '<span class="badge confirmed">✅ Success</span>' : '<span class="badge cancelled">❌ Error</span>'}</td>
+      <td>${a.status === 'success' ? '<span class="badge confirmed">✅ Active</span>' : a.status === 'paused' ? '<span class="badge pending">⏸ Paused</span>' : '<span class="badge cancelled">❌ Error</span>'}</td>
       <td style="font-size:12px;color:var(--text-muted)">${a.dur}</td>
     </tr>
   `).join('');
@@ -2207,6 +2512,12 @@ function closeModal(id) {
 
 function normalizePhone(phone) {
   return String(phone || '').replace(/\D/g, '');
+}
+
+// Same format the n8n workflows use for patients.phone (10 digits -> 91XXXXXXXXXX)
+function toWaPhone(phone) {
+  const p = normalizePhone(phone);
+  return p.length === 10 ? '91' + p : p;
 }
 
 function parseTime12Hour(timeText) {
@@ -2289,7 +2600,9 @@ async function bookAppointment() {
       throw new Error('The appointment date/time is invalid.');
     }
 
-    const slotTimeIso = slotDate.toISOString();
+    // Workflow stores slot_time as Indian time with no timezone suffix (YYYY-MM-DDTHH:mm:ss)
+    const pad2 = n => String(n).padStart(2, '0');
+    const slotTimeIso = `${year}-${pad2(month)}-${pad2(day)}T${pad2(time.hour)}:${pad2(time.minute)}:00`;
 
     // Prevent accidental double-booking for the same doctor + slot.
     const { data: existingAppointments, error: existingError } = await supabaseClient
@@ -2309,7 +2622,7 @@ async function bookAppointment() {
     const { data: existingPatients, error: patientLookupError } = await supabaseClient
       .from('patients')
       .select('id, name, phone')
-      .eq('phone', rawPhone);
+      .eq('phone', toWaPhone(rawPhone));
 
     if (patientLookupError) throw new Error(`Patient lookup failed: ${patientLookupError.message}`);
 
@@ -2318,7 +2631,7 @@ async function bookAppointment() {
     if (!patient) {
       const { data: newPatients, error: patientInsertError } = await supabaseClient
         .from('patients')
-        .insert({ name, phone: rawPhone })
+        .insert({ name, phone: toWaPhone(rawPhone) })
         .select('id, name, phone')
         .single();
 
@@ -2336,7 +2649,8 @@ async function bookAppointment() {
         patient_id: patient.id,
         doctor_id: doctor.id,
         slot_time: slotTimeIso,
-        status: 'booked',
+        status: 'confirmed',
+        source: 'manual',
         reason: `${type}${notes ? ` — ${notes}` : ''}`
       })
       .select('id, patient_id, doctor_id, slot_time, status, reason')
@@ -2349,7 +2663,7 @@ async function bookAppointment() {
     lastBookedAppointment = {
       id: appointment.id,
       patientName: patient.name || name,
-      phone: patient.phone || rawPhone,
+      phone: patient.phone || toWaPhone(rawPhone),
       doctorName: doctor.name,
       slotTime: slotTimeIso,
       type
@@ -2409,7 +2723,7 @@ function openAddPatient() {
 
 async function registerPatient() {
   const name = document.getElementById('patientName')?.value.trim();
-  const phone = document.getElementById('patientPhone')?.value.trim();
+  const phone = toWaPhone(document.getElementById('patientPhone')?.value.trim());
   const email = document.getElementById('patientEmail')?.value.trim() || null;
   const button = document.getElementById('registerPatientBtn');
 
@@ -2803,7 +3117,7 @@ async function loadNotifications() {
   }
 
   try {
-    const [apptResult, reportResult] = await Promise.all([
+    const [apptResult, reportResult, escResult] = await Promise.all([
       supabaseClient
         .from('appointments')
         .select('id,status,slot_time,created_at,patients(name)')
@@ -2812,8 +3126,14 @@ async function loadNotifications() {
         .limit(20),
       supabaseClient
         .from('reports')
-        .select('id,report_type,is_ready,created_at,ready_at,patients(name)')
+        .select('id,report_type,is_ready,is_critical,created_at,ready_at,patients(name)')
         .eq('is_ready', true)
+        .order('created_at', { ascending: false })
+        .limit(10),
+      supabaseClient
+        .from('escalations')
+        .select('id,patient_phone,reason,priority,created_at')
+        .eq('resolved', false)
         .order('created_at', { ascending: false })
         .limit(10)
     ]);
@@ -2845,16 +3165,36 @@ async function loadNotifications() {
         items.push({
           id: `report-${r.id}`,
           type: 'report',
-          icon: '🧪',
-          bg: 'var(--green-bg)',
-          color: 'var(--green)',
-          text: `${r.report_type || 'Lab report'} for ${patient} is ready.`,
+          icon: r.is_critical ? '🚨' : '🧪',
+          bg: r.is_critical ? 'var(--red-bg)' : 'var(--green-bg)',
+          color: r.is_critical ? 'var(--red)' : 'var(--green)',
+          text: r.is_critical
+            ? `CRITICAL: ${r.report_type || 'Lab report'} for ${patient} is ready.`
+            : `${r.report_type || 'Lab report'} for ${patient} is ready.`,
           time: r.ready_at || r.created_at,
           target: 'reports'
         });
       });
     } else {
       console.warn('Notification reports query failed:', reportResult.error);
+    }
+
+    if (!escResult.error) {
+      (escResult.data || []).forEach(e => {
+        const urgent = e.priority === 'high' || e.priority === 'critical';
+        items.push({
+          id: `escalation-${e.id}`,
+          type: 'escalation',
+          icon: '🧑‍💼',
+          bg: urgent ? 'var(--red-bg)' : 'var(--yellow-bg)',
+          color: urgent ? 'var(--red)' : 'var(--yellow)',
+          text: `Escalation (${e.priority || 'normal'}): ${e.reason || 'Patient needs the front desk'} — ${e.patient_phone || ''}`,
+          time: e.created_at,
+          target: 'whatsapp'
+        });
+      });
+    } else {
+      console.warn('Notification escalations query failed:', escResult.error);
     }
 
     items.sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
@@ -2894,6 +3234,8 @@ function handleNotificationClick(id) {
     navigate('appointments', null);
   } else if (item.target === 'reports') {
     navigate('reports', null);
+  } else if (item.target === 'whatsapp') {
+    navigate('whatsapp', null);
   }
 }
 
