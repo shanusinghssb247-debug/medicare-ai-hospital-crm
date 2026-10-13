@@ -507,6 +507,23 @@
   @media (max-width: 1000px) { .report-kpi-grid{grid-template-columns:repeat(2,1fr)} .report-schedule{grid-template-columns:1fr} }
   @media (max-width: 700px) { .report-kpi-grid{grid-template-columns:1fr} .report-check-grid{grid-template-columns:1fr} .report-hero{padding:20px} }
 
+
+  /* ─── STAFF AUTH / ENQUIRIES ─── */
+  .auth-overlay { position:fixed; inset:0; z-index:2000; display:none; align-items:center; justify-content:center; padding:20px; background:rgba(5,9,18,.96); backdrop-filter:blur(12px); }
+  .auth-overlay.open { display:flex; }
+  .auth-card { width:100%; max-width:420px; padding:30px; border:1px solid var(--border); border-radius:18px; background:var(--surface); box-shadow:0 24px 70px rgba(0,0,0,.5); }
+  .auth-brand { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+  .auth-brand .logo-icon { flex-shrink:0; }
+  .auth-title { font-family:'Space Grotesk',sans-serif; font-size:23px; font-weight:700; }
+  .auth-sub { color:var(--text-muted); font-size:12px; line-height:1.6; margin-top:5px; }
+  .auth-error { display:none; padding:10px 12px; border-radius:8px; background:var(--red-bg); color:#fca5a5; font-size:12px; line-height:1.5; margin-bottom:14px; }
+  .auth-error.show { display:block; }
+  .auth-note { color:var(--text-muted); font-size:11px; line-height:1.6; margin-top:16px; }
+  .staff-logout { width:100%; margin-top:8px; border:1px solid var(--border); border-radius:8px; background:transparent; color:var(--text-soft); padding:8px 12px; cursor:pointer; font:inherit; font-size:12px; }
+  .staff-logout:hover { background:var(--card); color:var(--text); }
+  .enquiry-message { max-width:340px; white-space:pre-wrap; overflow-wrap:anywhere; }
+  @media (max-width:600px) { .auth-card { padding:22px; } .enquiry-message { max-width:220px; } }
+
 </style>
 
 <!-- Supabase JS Client -->
@@ -542,6 +559,12 @@
     </a>
     <a class="nav-item" onclick="navigate('patients', this)">
       <span class="nav-icon">👤</span> Patients
+    </a>
+    <a class="nav-item" onclick="navigate('escalations', this)">
+      <span class="nav-icon">🚨</span> Escalations
+    </a>
+    <a class="nav-item" onclick="navigate('enquiries', this)">
+      <span class="nav-icon">📥</span> Enquiries
     </a>
     <a class="nav-item" onclick="navigate('reports', this)">
       <span class="nav-icon">🧪</span> Reports & Labs
@@ -585,6 +608,7 @@
         <div class="user-role">Admin • MediCare Hospital</div>
       </div>
     </div>
+    <button class="staff-logout" onclick="staffSignOut()">↪ Sign out</button>
   </div>
 </nav>
 
@@ -915,6 +939,64 @@
     </div>
 
     <!-- ═══════════════════════════════ REPORTS PAGE ═══════════════════════════════ -->
+    <!-- ═══════════════════════════════ ESCALATIONS PAGE ═══════════════════════════════ -->
+    <div class="page" id="page-escalations">
+      <div class="page-header">
+        <div>
+          <div class="page-h1">🚨 Escalation Management</div>
+          <div class="page-sub">Human follow-up queue for patient issues flagged by AI and hospital workflows.</div>
+        </div>
+        <button class="btn btn-ghost" onclick="renderEscalations()">🔄 Refresh</button>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card yellow"><div class="stat-icon">🟠</div><div class="stat-value" id="escOpenCount">—</div><div class="stat-label">Open / unresolved</div></div>
+        <div class="stat-card red"><div class="stat-icon">🔥</div><div class="stat-value" id="escUrgentCount">—</div><div class="stat-label">High / critical priority</div></div>
+        <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="escResolvedCount">—</div><div class="stat-label">Resolved</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Escalation Queue</div>
+          <span class="tag" id="escTotalCount">Loading…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Created</th><th>Patient / Phone</th><th>Reason</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="escalationsTable"><tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-muted)">Loading escalations…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="report-note" style="margin-top:12px">This page reads from <code>public.escalations</code>. Use “Mark resolved” after the front desk has handled the case. Only authenticated staff with the appropriate Supabase RLS policy can update records.</p>
+    </div>
+
+    <!-- ═══════════════════════════════ ENQUIRIES PAGE ═══════════════════════════════ -->
+    <div class="page" id="page-enquiries">
+      <div class="page-header">
+        <div>
+          <div class="page-h1">📥 Hospital Enquiries</div>
+          <div class="page-sub">Website enquiries saved by the n8n workflow to Supabase.</div>
+        </div>
+        <button class="btn btn-ghost" onclick="renderEnquiries()">🔄 Refresh</button>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card yellow"><div class="stat-icon">🆕</div><div class="stat-value" id="enqNewCount">—</div><div class="stat-label">New enquiries</div></div>
+        <div class="stat-card blue"><div class="stat-icon">📞</div><div class="stat-value" id="enqContactedCount">—</div><div class="stat-label">Contacted</div></div>
+        <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="enqClosedCount">—</div><div class="stat-label">Closed</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Enquiry Inbox</div>
+          <span class="tag" id="enqTotalCount">Loading…</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Received</th><th>Contact</th><th>Department</th><th>Enquiry</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="enquiriesTable"><tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-muted)">Loading enquiries…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="report-note" style="margin-top:12px">New enquiries appear here after the n8n workflow writes them to <code>public.enquiries</code>. The n8n workflow must include the Supabase “Add enquiry” node and be active.</p>
+    </div>
+
     <div class="page" id="page-reports">
       <div class="page-header">
         <div>
@@ -1178,7 +1260,7 @@
         <div class="card-body">
           <div class="alert blue" style="margin-bottom:0">
             <span>ℹ️</span>
-            <div>To connect Supabase, replace <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> in the JavaScript below.</div>
+            <div>Supabase is configured for this project. Staff sign-in is required because database access is protected by authenticated Row Level Security policies.</div>
         </div>
       </div>
 
@@ -1314,6 +1396,30 @@
         <button class="btn btn-primary" id="uploadReportBtn" onclick="uploadReport()">⬆️ Upload Report / Lab File</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Staff sign-in: required because the Supabase tables use authenticated RLS policies. -->
+<div class="auth-overlay" id="staffAuthOverlay" role="dialog" aria-modal="true" aria-labelledby="staffAuthTitle">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="logo-icon">🏥</div>
+      <div><div class="auth-title" id="staffAuthTitle">MediCare AI</div><div class="logo-sub">STAFF SECURE LOGIN</div></div>
+    </div>
+    <p class="auth-sub" style="margin-bottom:20px">Sign in with your hospital staff account to access patient records and the CRM dashboard.</p>
+    <div class="auth-error" id="staffAuthError" role="alert"></div>
+    <form id="staffLoginForm" onsubmit="staffSignIn(event)">
+      <div class="form-group">
+        <label class="form-label" for="staffEmail">Staff email</label>
+        <input class="form-input" id="staffEmail" type="email" autocomplete="username" placeholder="staff@hospital.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="staffPassword">Password</label>
+        <input class="form-input" id="staffPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+      </div>
+      <button class="btn btn-primary" id="staffLoginButton" type="submit" style="width:100%;justify-content:center;padding:11px">Sign in securely</button>
+    </form>
+    <p class="auth-note">Staff accounts must be created in Supabase Authentication by an administrator. Public sign-ups should remain disabled. Never use a service-role key in this HTML file.</p>
   </div>
 </div>
 
@@ -1482,7 +1588,7 @@ function navigate(page, el) {
     });
   }
 
-  const titles = {dashboard:'Dashboard', appointments:'Appointments', patients:'Patient Directory', whatsapp:'WhatsApp AI Agent', voice:'AI Voice Calls', reports:'Reports & Labs', feedback:'Feedback', analytics:'Analytics', automation:'Automation Logs', managementReports:'Manager Reports', settings:'Settings'};
+  const titles = {dashboard:'Dashboard', appointments:'Appointments', patients:'Patient Directory', escalations:'Escalation Management', whatsapp:'WhatsApp AI Agent', voice:'AI Voice Calls', reports:'Reports & Labs', feedback:'Feedback', analytics:'Analytics', automation:'Automation Logs', managementReports:'Manager Reports', settings:'Settings', enquiries:'Hospital Enquiries'};
   document.getElementById('page-title').textContent = titles[page] || page;
   currentPage = page;
   renderPage(page);
@@ -1492,6 +1598,7 @@ function renderPage(page) {
   if (page === 'dashboard') renderDashboard();
   else if (page === 'appointments') renderAppointments();
   else if (page === 'patients') renderPatients();
+  else if (page === 'escalations') renderEscalations();
   else if (page === 'whatsapp') renderWhatsApp();
   else if (page === 'voice') renderVoice();
   else if (page === 'reports') renderReports();
@@ -1499,6 +1606,7 @@ function renderPage(page) {
   else if (page === 'analytics') renderAnalytics();
   else if (page === 'automation') renderAutomation();
   else if (page === 'managementReports') renderManagementReports();
+  else if (page === 'enquiries') renderEnquiries();
 }
 
 // ─── DASHBOARD ───
@@ -3191,9 +3299,262 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 const d = new Date();
 document.getElementById('topbar-date').textContent = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 
-// ─── INIT ───
-renderDashboard();
-loadNotifications();
+// ─── AUTHENTICATED INIT ───
+// The SQL policies supplied for this project grant staff access to the authenticated role.
+// Do not load protected tables until a staff session exists.
+let staffSession = null;
+let authInitComplete = false;
+
+function showStaffLogin(message) {
+  const overlay = document.getElementById('staffAuthOverlay');
+  if (overlay) overlay.classList.add('open');
+  const err = document.getElementById('staffAuthError');
+  if (err) {
+    err.textContent = message || '';
+    err.classList.toggle('show', Boolean(message));
+  }
+}
+
+function hideStaffLogin() {
+  const overlay = document.getElementById('staffAuthOverlay');
+  if (overlay) overlay.classList.remove('open');
+  const err = document.getElementById('staffAuthError');
+  if (err) { err.textContent = ''; err.classList.remove('show'); }
+}
+
+function onStaffSignedIn(session) {
+  staffSession = session || null;
+  if (!session) {
+    showStaffLogin();
+    return;
+  }
+  hideStaffLogin();
+  // Keep the signed-in email private in the sidebar; show a generic staff label.
+  const nameEl = document.querySelector('.user-name');
+  const avatarEl = document.querySelector('.avatar');
+  if (nameEl) nameEl.textContent = 'Hospital Admin';
+  if (avatarEl) avatarEl.textContent = 'AD';
+  if (!authInitComplete) {
+    authInitComplete = true;
+    renderDashboard();
+    loadNotifications();
+  } else {
+    renderPage(currentPage || 'dashboard');
+    loadNotifications();
+  }
+}
+
+async function staffSignIn(event) {
+  if (event) event.preventDefault();
+  const email = document.getElementById('staffEmail').value.trim();
+  const password = document.getElementById('staffPassword').value;
+  const button = document.getElementById('staffLoginButton');
+  const err = document.getElementById('staffAuthError');
+  if (button) { button.disabled = true; button.textContent = 'Signing in…'; }
+  if (err) { err.textContent = ''; err.classList.remove('show'); }
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (!data.session) throw new Error('Sign-in did not return a session. Check your Supabase Auth configuration.');
+    onStaffSignedIn(data.session);
+    showToast('Signed in successfully.', 'success');
+  } catch (error) {
+    console.error('STAFF SIGN-IN ERROR:', error);
+    showStaffLogin(error.message || 'Sign-in failed. Check your email and password.');
+    if (err) { err.textContent = error.message || 'Sign-in failed. Check your email and password.'; err.classList.add('show'); }
+  } finally {
+    if (button) { button.disabled = false; button.textContent = 'Sign in securely'; }
+  }
+}
+
+async function staffSignOut() {
+  try {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
+    staffSession = null;
+    authInitComplete = false;
+    showStaffLogin();
+    showToast('You have been signed out.', 'info');
+  } catch (error) {
+    console.error('STAFF SIGN-OUT ERROR:', error);
+    showToast(error.message || 'Could not sign out.', 'error');
+  }
+}
+
+async function renderEscalations() {
+  const tbody = document.getElementById('escalationsTable');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-muted)">Loading escalations…</td></tr>';
+  try {
+    // select('*') keeps the dashboard compatible with the existing escalations table
+    // even if optional columns differ slightly between schema revisions.
+    const { data, error } = await supabaseClient
+      .from('escalations')
+      .select('*')
+      .limit(500);
+    if (error) throw error;
+
+    const rows = (data || []).sort((a, b) => {
+      const da = new Date(a.created_at || a.createdAt || 0).getTime() || 0;
+      const db = new Date(b.created_at || b.createdAt || 0).getTime() || 0;
+      return db - da;
+    });
+    const isResolved = row => row.resolved === true ||
+      ['resolved', 'closed', 'completed'].includes(String(row.status || '').toLowerCase());
+    const openCount = rows.filter(row => !isResolved(row)).length;
+    const urgentCount = rows.filter(row => !isResolved(row) &&
+      ['high', 'critical', 'urgent'].includes(String(row.priority || row.urgency || '').toLowerCase())).length;
+    const resolvedCount = rows.filter(isResolved).length;
+
+    document.getElementById('escOpenCount').textContent = openCount;
+    document.getElementById('escUrgentCount').textContent = urgentCount;
+    document.getElementById('escResolvedCount').textContent = resolvedCount;
+    document.getElementById('escTotalCount').textContent = rows.length + ' total';
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-muted)">No escalations found. New records will appear here when the AI or an n8n workflow creates them.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(row => {
+      const resolved = isResolved(row);
+      const priority = String(row.priority || row.urgency || 'normal');
+      const priorityLower = priority.toLowerCase();
+      const priorityClass = ['critical', 'urgent', 'high'].includes(priorityLower) ? 'cancelled' :
+        priorityLower === 'normal' || priorityLower === 'medium' ? 'pending' : 'blue';
+      const statusText = resolved ? 'Resolved' : String(row.status || 'open').replace(/[_-]/g, ' ');
+      const statusClass = resolved ? 'confirmed' : 'pending';
+      const patient = row.patient_name || row.full_name || row.patient_id || 'Patient not linked';
+      const phone = row.patient_phone || row.phone || '';
+      const created = row.created_at || row.createdAt || row.timestamp || null;
+      const action = resolved
+        ? '<span style="font-size:11px;color:var(--text-muted)">Completed</span>'
+        : '<button class="btn btn-ghost" style="padding:5px 8px;font-size:11px" data-escalation-id="' + escapeCRMHtml(row.id) + '" onclick="resolveEscalation(this)">Mark resolved</button>';
+      return '<tr>' +
+        '<td>' + escapeCRMHtml(formatCRMDate(created)) + '</td>' +
+        '<td><strong>' + escapeCRMHtml(patient) + '</strong><div style="font-size:11px;color:var(--text-muted)">' + escapeCRMHtml(phone || '') + '</div></td>' +
+        '<td><div class="enquiry-message">' + escapeCRMHtml(row.reason || row.description || row.message || '—') + '</div></td>' +
+        '<td><span class="badge ' + priorityClass + '">' + escapeCRMHtml(priority) + '</span></td>' +
+        '<td><span class="badge ' + statusClass + '">' + escapeCRMHtml(statusText) + '</span></td>' +
+        '<td style="min-width:125px">' + action + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch (error) {
+    console.error('ESCALATIONS LOAD ERROR:', error);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#fca5a5">Could not load escalations: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
+    showToast('Escalations could not load. Check the escalations table and authenticated RLS policy.', 'error');
+  }
+}
+
+async function resolveEscalation(button) {
+  const id = button && button.dataset.escalationId;
+  if (!id) return;
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Saving…';
+  try {
+    // The resolved column is part of the configured escalations schema.
+    const { error } = await supabaseClient.from('escalations').update({ resolved: true }).eq('id', id);
+    if (error) throw error;
+    showToast('Escalation marked as resolved.', 'success');
+    await renderEscalations();
+  } catch (error) {
+    console.error('ESCALATION UPDATE ERROR:', error);
+    showToast(error.message || 'Could not update escalation. Check the staff update policy.', 'error');
+    button.disabled = false;
+    button.textContent = oldText;
+  }
+}
+
+async function renderEnquiries() {
+  const tbody = document.getElementById('enquiriesTable');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-muted)">Loading enquiries…</td></tr>';
+  try {
+    const { data, error } = await supabaseClient
+      .from('enquiries')
+      .select('id,full_name,phone,email,department,message,status,submitted_at')
+      .order('submitted_at', { ascending: false })
+      .limit(300);
+    if (error) throw error;
+    const rows = data || [];
+    const counts = { new: 0, contacted: 0, closed: 0 };
+    rows.forEach(row => { if (Object.prototype.hasOwnProperty.call(counts, row.status)) counts[row.status]++; });
+    document.getElementById('enqNewCount').textContent = counts.new;
+    document.getElementById('enqContactedCount').textContent = counts.contacted;
+    document.getElementById('enqClosedCount').textContent = counts.closed;
+    document.getElementById('enqTotalCount').textContent = rows.length + ' total';
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-muted)">No enquiries found yet. Submit the n8n Hospital Enquiry form to test the workflow.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(row => {
+      const status = ['new','contacted','closed'].includes(row.status) ? row.status : 'new';
+      const badgeClass = status === 'new' ? 'pending' : status === 'contacted' ? 'blue' : 'confirmed';
+      const contact = [row.phone, row.email].filter(Boolean).map(v => escapeCRMHtml(v)).join('<br>');
+      const actions = (status === 'new' ? '<button class="btn btn-ghost" style="padding:5px 8px;font-size:11px" data-enquiry-id="' + escapeCRMHtml(row.id) + '" data-enquiry-status="contacted" onclick="updateEnquiryStatus(this)">Mark contacted</button>' : '') +
+        (status !== 'closed' ? '<button class="btn btn-ghost" style="padding:5px 8px;font-size:11px;margin-left:4px" data-enquiry-id="' + escapeCRMHtml(row.id) + '" data-enquiry-status="closed" onclick="updateEnquiryStatus(this)">Close</button>' : '');
+      return '<tr><td>' + escapeCRMHtml(formatCRMDate(row.submitted_at)) + '</td><td><strong>' + escapeCRMHtml(row.full_name || 'Unknown') + '</strong><div style="font-size:11px;color:var(--text-muted)">' + (contact || 'No contact details') + '</div></td><td>' + escapeCRMHtml(row.department || '—') + '</td><td><div class="enquiry-message">' + escapeCRMHtml(row.message || '—') + '</div></td><td><span class="badge ' + badgeClass + '">' + escapeCRMHtml(status) + '</span></td><td style="min-width:145px">' + (actions || '<span style="font-size:11px;color:var(--text-muted)">Completed</span>') + '</td></tr>';
+    }).join('');
+  } catch (error) {
+    console.error('ENQUIRIES LOAD ERROR:', error);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#fca5a5">Could not load enquiries: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
+    showToast('Enquiries could not load. Check the enquiries table and authenticated RLS policy.', 'error');
+  }
+}
+
+async function updateEnquiryStatus(button) {
+  const id = button && button.dataset.enquiryId;
+  const status = button && button.dataset.enquiryStatus;
+  if (!id || !['contacted','closed'].includes(status)) return;
+  const oldText = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Saving…';
+  try {
+    const { error } = await supabaseClient.from('enquiries').update({ status }).eq('id', id);
+    if (error) throw error;
+    showToast(status === 'closed' ? 'Enquiry closed.' : 'Enquiry marked as contacted.', 'success');
+    await renderEnquiries();
+  } catch (error) {
+    console.error('ENQUIRY UPDATE ERROR:', error);
+    showToast(error.message || 'Could not update enquiry.', 'error');
+    button.disabled = false;
+    button.textContent = oldText;
+  }
+}
+
+function escapeCRMHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function formatCRMDate(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  // Ignore transient token refresh events until the initial session check is complete.
+  if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+    if (session) onStaffSignedIn(session);
+    else if (!authInitComplete) showStaffLogin();
+  } else if (event === 'SIGNED_OUT') {
+    staffSession = null;
+    authInitComplete = false;
+    showStaffLogin();
+  }
+});
+
+(async function initializeStaffAuth() {
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    if (data.session) onStaffSignedIn(data.session);
+    else showStaffLogin();
+  } catch (error) {
+    console.error('AUTH INITIALIZATION ERROR:', error);
+    showStaffLogin('Unable to check your staff session. Check your Supabase project configuration.');
+  }
+})();
 
 function exportAppointmentsCSV() {
   const rows = Array.from(document.querySelectorAll('table tbody tr'));
