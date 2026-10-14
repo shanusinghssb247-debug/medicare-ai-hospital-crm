@@ -871,7 +871,7 @@
           <div class="page-h1">👤 Patient Directory</div>
           <div class="page-sub">Registered patients — history, appointments, reports</div>
         </div>
-        <button class="btn btn-primary" onclick="openAddPatient()">+ Register Patient</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="openCsvImport()">📥 Import CSV</button><button class="btn btn-primary" onclick="openAddPatient()">+ Register Patient</button></div>
       </div>
 
       <div class="kpi-row">
@@ -3741,6 +3741,232 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
   }
 })();
 
+
+// ─── CSV IMPORT (patients + appointments) ──────────────────────────────────
+let csvImportRows = [];
+let csvImportHeaders = [];
+let csvImportValidated = false;
+let csvImportFileName = '';
+
+function openCsvImport() {
+  if (!requireRole(['admin','manager'])) return;
+  const modal = document.getElementById('csvImportModal');
+  if (!modal) { showToast('CSV import dialog is missing from this HTML file.', 'error'); return; }
+  modal.classList.add('open');
+  resetCsvImportState();
+}
+function closeCsvImport() {
+  const modal = document.getElementById('csvImportModal');
+  if (modal) modal.classList.remove('open');
+}
+function resetCsvImportState() {
+  csvImportRows = [];
+  csvImportHeaders = [];
+  csvImportValidated = false;
+  csvImportFileName = '';
+  const file = document.getElementById('csvImportFile');
+  if (file) file.value = '';
+  const submit = document.getElementById('csvImportSubmit');
+  if (submit) submit.disabled = true;
+  const preview = document.getElementById('csvImportPreview');
+  if (preview) preview.style.display = 'none';
+  const results = document.getElementById('csvImportResults');
+  if (results) results.innerHTML = '';
+  setCsvImportStatus('Choose a CSV file, then click Validate CSV.', 'blue');
+}
+function setCsvImportStatus(message, kind) {
+  const box = document.getElementById('csvImportStatus');
+  if (!box) return;
+  box.className = 'alert ' + (['blue','green','yellow','red'].includes(kind) ? kind : 'blue');
+  box.textContent = message;
+}
+function parseCsvText(text) {
+  const rows = [];
+  let row = [], cell = '', quoted = false;
+  text = String(text || '').replace(/^\uFEFF/, '');
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], next = text[i + 1];
+    if (ch === '"') {
+      if (quoted && next === '"') { cell += '"'; i++; }
+      else quoted = !quoted;
+    } else if (ch === ',' && !quoted) {
+      row.push(cell.trim()); cell = '';
+    } else if ((ch === '\n' || ch === '\r') && !quoted) {
+      if (ch === '\r' && next === '\n') i++;
+      row.push(cell.trim()); cell = '';
+      if (row.some(value => value !== '')) rows.push(row);
+      row = [];
+    } else cell += ch;
+  }
+  if (quoted) throw new Error('CSV has an unclosed quotation mark. Re-save it as a valid CSV.');
+  if (cell.length || row.length) { row.push(cell.trim()); if (row.some(value => value !== '')) rows.push(row); }
+  if (rows.length < 2) throw new Error('CSV must contain a header row and at least one data row.');
+  const headers = rows.shift().map(h => h.trim().toLowerCase().replace(/^\uFEFF/, ''));
+  if (headers.some(h => !h)) throw new Error('CSV contains an empty column name.');
+  if (new Set(headers).size !== headers.length) throw new Error('CSV contains duplicate column names.');
+  return { headers, rows: rows.map((cells, idx) => {
+    const obj = {};
+    headers.forEach((header, i) => obj[header] = String(cells[i] == null ? '' : cells[i]).trim());
+    obj.__row = idx + 2;
+    return obj;
+  }) };
+}
+async function handleCsvFileSelected(file) {
+  csvImportValidated = false;
+  const submit = document.getElementById('csvImportSubmit');
+  if (submit) submit.disabled = true;
+  if (!file) { setCsvImportStatus('Choose a CSV file, then click Validate CSV.', 'blue'); return; }
+  if (!/\.csv$/i.test(file.name) && file.type !== 'text/csv') {
+    setCsvImportStatus('Please choose a .csv file.', 'red'); return;
+  }
+  try {
+    const text = await file.text();
+    const parsed = parseCsvText(text);
+    csvImportRows = parsed.rows;
+    csvImportHeaders = parsed.headers;
+    csvImportFileName = file.name;
+    setCsvImportStatus(`Loaded ${file.name}: ${csvImportRows.length} data row(s). Click Validate CSV to check required columns and values.`, 'blue');
+    renderCsvPreview();
+  } catch (error) {
+    csvImportRows = []; csvImportHeaders = [];
+    setCsvImportStatus(error.message || 'Could not read CSV file.', 'red');
+  }
+}
+function renderCsvPreview() {
+  const wrap = document.getElementById('csvImportPreview');
+  const head = document.getElementById('csvPreviewHead');
+  const body = document.getElementById('csvPreviewBody');
+  if (!wrap || !head || !body || !csvImportRows.length) return;
+  head.innerHTML = '<tr>' + csvImportHeaders.map(h => '<th>' + escapeCRMHtml(h) + '</th>').join('') + '</tr>';
+  body.innerHTML = csvImportRows.slice(0,5).map(row => '<tr>' + csvImportHeaders.map(h => '<td>' + escapeCRMHtml(row[h] || '—') + '</td>').join('') + '</tr>').join('');
+  wrap.style.display = 'block';
+}
+function downloadCsvTemplate() {
+  const type = document.getElementById('csvImportType')?.value || 'patients';
+  const content = type === 'patients'
+    ? 'name,phone,email\nDemo Patient,9876543210,demo@example.com\n'
+    : 'patient_phone,doctor_name,slot_time,reason,status\n9876543210,Dr. Rajesh Sharma,2026-11-01T10:00:00+05:30,General consultation,booked\n';
+  const blob = new Blob(['\uFEFF' + content], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url; link.download = type === 'patients' ? 'medicare-patient-template.csv' : 'medicare-appointment-template.csv';
+  document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+}
+function validateCsvImport() {
+  try {
+    if (!csvImportRows.length) throw new Error('First choose a valid CSV file.');
+    const type = document.getElementById('csvImportType')?.value || 'patients';
+    const required = type === 'patients' ? ['name','phone'] : ['patient_phone','doctor_name','slot_time'];
+    const missing = required.filter(h => !csvImportHeaders.includes(h));
+    if (missing.length) throw new Error('Missing required column(s): ' + missing.join(', ') + '. Download the correct template and keep column names unchanged.');
+    const issues = [];
+    csvImportRows.forEach(row => {
+      if (type === 'patients') {
+        if (!row.name) issues.push(`Row ${row.__row}: name is required.`);
+        if (!row.phone) issues.push(`Row ${row.__row}: phone is required.`);
+      } else {
+        if (!row.patient_phone) issues.push(`Row ${row.__row}: patient_phone is required.`);
+        if (!row.doctor_name) issues.push(`Row ${row.__row}: doctor_name is required.`);
+        if (!row.slot_time || Number.isNaN(Date.parse(row.slot_time))) issues.push(`Row ${row.__row}: slot_time must be a valid date/time (e.g. 2026-11-01T10:00:00+05:30).`);
+        if (row.status && !['booked','confirmed','completed','cancelled','missed'].includes(row.status.toLowerCase())) issues.push(`Row ${row.__row}: unsupported status "${row.status}".`);
+      }
+    });
+    if (issues.length) {
+      csvImportValidated = false;
+      document.getElementById('csvImportSubmit').disabled = true;
+      setCsvImportStatus(`Validation failed: ${issues.length} issue(s). ${issues.slice(0,4).join(' ')}`, 'red');
+      return false;
+    }
+    csvImportValidated = true;
+    document.getElementById('csvImportSubmit').disabled = false;
+    setCsvImportStatus(`Validation passed: ${csvImportRows.length} row(s), required columns present, no basic data errors. Import is ready.`, 'green');
+    return true;
+  } catch (error) {
+    csvImportValidated = false;
+    const submit = document.getElementById('csvImportSubmit');
+    if (submit) submit.disabled = true;
+    setCsvImportStatus(error.message || 'Validation failed.', 'red');
+    return false;
+  }
+}
+async function runCsvImport() {
+  if (!requireRole(['admin','manager'])) return;
+  if (!csvImportValidated && !validateCsvImport()) return;
+  const type = document.getElementById('csvImportType')?.value || 'patients';
+  const button = document.getElementById('csvImportSubmit');
+  const previous = button ? button.textContent : '';
+  if (button) { button.disabled = true; button.textContent = 'Importing…'; }
+  setCsvImportStatus('Importing rows into Supabase… please keep this window open.', 'blue');
+  const result = {inserted:0, skipped:0, failed:0, errors:[]};
+  try {
+    if (type === 'patients') {
+      for (const row of csvImportRows) {
+        try {
+          const phone = row.phone.replace(/\s+/g, '');
+          const {data: existing, error: lookupError} = await supabaseClient.from('patients').select('id').eq('phone', phone).limit(1);
+          if (lookupError) throw lookupError;
+          if (existing && existing.length) { result.skipped++; continue; }
+          const payload = {name:row.name.trim(), phone};
+          if (row.email) payload.email = row.email.trim();
+          const {error} = await supabaseClient.from('patients').insert(payload);
+          if (error) throw error;
+          result.inserted++;
+        } catch (error) {
+          result.failed++;
+          if (result.errors.length < 8) result.errors.push(`Row ${row.__row}: ${error.message || 'Insert failed'}`);
+        }
+      }
+    } else {
+      const {data: patients, error: patientError} = await supabaseClient.from('patients').select('id,name,phone');
+      if (patientError) throw patientError;
+      const {data: doctors, error: doctorError} = await supabaseClient.from('doctors').select('id,name');
+      if (doctorError) throw doctorError;
+      for (const row of csvImportRows) {
+        try {
+          const patient = (patients || []).find(p => String(p.phone || '').replace(/\s+/g,'') === row.patient_phone.replace(/\s+/g,''));
+          const doctor = (doctors || []).find(d => String(d.name || '').trim().toLowerCase() === row.doctor_name.trim().toLowerCase());
+          if (!patient) throw new Error('Patient phone not found in CRM; import patient first.');
+          if (!doctor) throw new Error('Doctor name not found in CRM; use the exact doctor name.');
+          const slotTime = new Date(row.slot_time);
+          if (Number.isNaN(slotTime.getTime())) throw new Error('Invalid slot_time.');
+          const {data: existingSlot, error: slotError} = await supabaseClient.from('appointments').select('id,status').eq('doctor_id',doctor.id).eq('slot_time',slotTime.toISOString()).neq('status','cancelled').limit(1);
+          if (slotError) throw slotError;
+          if (existingSlot && existingSlot.length) { result.skipped++; continue; }
+          const payload = {
+            patient_id: patient.id,
+            doctor_id: doctor.id,
+            slot_time: slotTime.toISOString(),
+            status: (row.status || 'booked').toLowerCase(),
+            reason: row.reason || 'Imported from CSV'
+          };
+          const {error} = await supabaseClient.from('appointments').insert(payload);
+          if (error) throw error;
+          result.inserted++;
+        } catch (error) {
+          result.failed++;
+          if (result.errors.length < 8) result.errors.push(`Row ${row.__row}: ${error.message || 'Insert failed'}`);
+        }
+      }
+    }
+    const summary = `<div class="alert ${result.failed ? 'yellow' : 'green'}">Import finished — inserted: ${result.inserted}, skipped: ${result.skipped}, failed: ${result.failed}.</div>` +
+      (result.errors.length ? `<div class="alert red"><div><strong>First errors</strong><ul style="margin:8px 0 0 18px">${result.errors.map(e=>'<li>'+escapeCRMHtml(e)+'</li>').join('')}</ul></div></div>` : '');
+    document.getElementById('csvImportResults').innerHTML = summary;
+    setCsvImportStatus(result.failed ? 'Import finished with some failed rows. See details below.' : 'Import completed successfully.', result.failed ? 'yellow' : 'green');
+    if (result.inserted) {
+      void logAuditEvent(type === 'patients' ? 'patient_registered' : 'appointment_created', type, null, {source:'csv_import',file_name:csvImportFileName,inserted:result.inserted,skipped:result.skipped,failed:result.failed});
+      if (type === 'patients' && typeof renderPatients === 'function') await renderPatients();
+      if (type === 'appointments' && typeof renderAppointments === 'function') await renderAppointments();
+    }
+  } catch (error) {
+    console.error('CSV IMPORT ERROR:', error);
+    setCsvImportStatus(`Import failed: ${error.message || 'Unknown Supabase error'}`, 'red');
+  } finally {
+    if (button) { button.textContent = previous || 'Validate & Import'; button.disabled = !csvImportValidated; }
+  }
+}
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closeCsvImport(); });
+
+
 function exportAppointmentsCSV() {
   if (!requireRole(['admin','manager'])) return;
   const rows = Array.from(document.querySelectorAll('table tbody tr'));
@@ -3764,5 +3990,50 @@ function exportAppointmentsCSV() {
   showToast('CSV downloaded successfully', 'success');
 }
 </script>
+
+<!-- CSV Import Modal -->
+<div class="modal-overlay" id="csvImportModal" role="dialog" aria-modal="true" aria-labelledby="csvImportTitle" onclick="if(event.target===this)closeCsvImport()">
+  <div class="modal" style="width:860px;max-width:96vw">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="csvImportTitle">Import hospital data from CSV</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Validate the file before writing anything to Supabase.</div>
+      </div>
+      <button class="modal-close" type="button" onclick="closeCsvImport()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="csvImportType">Import type</label>
+          <select class="form-select" id="csvImportType" onchange="resetCsvImportState()">
+            <option value="patients">Patients</option>
+            <option value="appointments">Appointments</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="csvImportFile">CSV file</label>
+          <input class="form-input" id="csvImportFile" type="file" accept=".csv,text/csv" onchange="handleCsvFileSelected(this.files && this.files[0])">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-ghost" type="button" onclick="downloadCsvTemplate()">⬇ Download template</button>
+        <button class="btn btn-ghost" type="button" onclick="validateCsvImport()">✓ Validate CSV</button>
+        <button class="btn btn-primary" type="button" id="csvImportSubmit" onclick="runCsvImport()" disabled>Validate &amp; Import</button>
+      </div>
+      <div id="csvImportStatus" class="alert blue" role="status" aria-live="polite">Choose a CSV file, then click Validate CSV.</div>
+      <div id="csvImportPreview" style="display:none;margin-top:14px">
+        <div class="section-title">Preview (first 5 rows)</div>
+        <div class="table-wrap" style="max-height:260px">
+          <table><thead id="csvPreviewHead"></thead><tbody id="csvPreviewBody"></tbody></table>
+        </div>
+      </div>
+      <div id="csvImportResults" style="margin-top:14px"></div>
+      <div style="font-size:11px;color:var(--text-muted);line-height:1.6;margin-top:14px">
+        Patients require <code>name,phone</code>. Appointments require <code>patient_phone,doctor_name,slot_time</code>; optional columns are <code>reason,status</code>. Existing patients and occupied doctor slots are skipped, not overwritten.
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
