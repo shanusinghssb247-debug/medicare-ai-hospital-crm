@@ -1476,9 +1476,30 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // SUPABASE CLIENT
 // ============================================
 
+// Agar Supabase library load nahi hui (slow net / blocked CDN), to login screen error ke saath dikhao
+if (!window.supabase) {
+  var _ov = document.getElementById('staffAuthOverlay');
+  var _er = document.getElementById('staffAuthError');
+  if (_ov) _ov.classList.add('open');
+  if (_er) { _er.textContent = 'Supabase library load nahi hui. Internet check karke page refresh karein.'; _er.classList.add('show'); }
+  throw new Error('Supabase library failed to load');
+}
+
+// Session sirf memory mein rahegi (kahin save nahi hoti).
+// Isliye page jab bhi khulega ya refresh hoga, har baar email + password poochega.
+const _memoryStore = {};
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_ANON_KEY
+  SUPABASE_ANON_KEY,
+  { auth: {
+      storage: {
+        getItem: function (k) { return Object.prototype.hasOwnProperty.call(_memoryStore, k) ? _memoryStore[k] : null; },
+        setItem: function (k, v) { _memoryStore[k] = v; },
+        removeItem: function (k) { delete _memoryStore[k]; }
+      },
+      persistSession: true,
+      autoRefreshToken: true
+  } }
 );
 
 // Make client available globally as well
