@@ -2,7 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" id="vp" content="width=1280, initial-scale=1.0">
+<script>
+  // Mobile par bhi desktop layout dikhao aur screen ke hisaab se auto-fit karo
+  (function () {
+    var DESKTOP_WIDTH = 1280;
+    var vp = document.getElementById('vp');
+    function fit() {
+      var w = Math.min(screen.width, window.innerWidth || screen.width);
+      if (w < DESKTOP_WIDTH) {
+        vp.setAttribute('content', 'width=' + DESKTOP_WIDTH + ', initial-scale=' + (w / DESKTOP_WIDTH).toFixed(3) + ', minimum-scale=' + (w / DESKTOP_WIDTH).toFixed(3) + ', maximum-scale=5, user-scalable=yes');
+      } else {
+        vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      }
+    }
+    fit();
+    window.addEventListener('orientationchange', function () { setTimeout(fit, 300); });
+  })();
+</script>
 <title>MediCare AI — Hospital CRM Dashboard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
