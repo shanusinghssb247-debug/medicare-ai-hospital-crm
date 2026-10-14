@@ -3383,7 +3383,7 @@ function applyStaffPermissions() {
     {selector:'[onclick="triggerManualCall()"]', roles:['admin','manager','front desk']}
   ];
   actionRules.forEach(rule => document.querySelectorAll(rule.selector).forEach(el => { el.style.display = rule.roles.includes(role) ? '' : 'none'; }));
-  const displayName = staffProfile.full_name || staffProfile.name || staffProfile.display_name || (staffSession.user && staffSession.user.email) || 'Hospital Staff';
+  const displayName = staffProfile.full_name || staffProfile.name || staffProfile.display_name || 'Hospital Staff';
   const roleLabel = ROLE_LABELS[role] || String(staffProfile.role || 'Staff');
   const nameEl = document.getElementById('staffDisplayName');
   const roleEl = document.getElementById('staffDisplayRole');
