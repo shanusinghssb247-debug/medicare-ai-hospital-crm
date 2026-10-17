@@ -2,24 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" id="vp" content="width=1280, initial-scale=1.0">
-<script>
-  // Mobile par bhi desktop layout dikhao aur screen ke hisaab se auto-fit karo
-  (function () {
-    var DESKTOP_WIDTH = 1280;
-    var vp = document.getElementById('vp');
-    function fit() {
-      var w = Math.min(screen.width, window.innerWidth || screen.width);
-      if (w < DESKTOP_WIDTH) {
-        vp.setAttribute('content', 'width=' + DESKTOP_WIDTH + ', initial-scale=' + (w / DESKTOP_WIDTH).toFixed(3) + ', minimum-scale=' + (w / DESKTOP_WIDTH).toFixed(3) + ', maximum-scale=5, user-scalable=yes');
-      } else {
-        vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
-      }
-    }
-    fit();
-    window.addEventListener('orientationchange', function () { setTimeout(fit, 300); });
-  })();
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Private staff dashboard: keep it out of search engines so a login page is never indexed. -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#0b0f1a">
+
+lines 1-8
+<meta name="color-scheme" content="dark">
+<meta name="description" content="MediCare AI Hospital CRM — appointments, patients, WhatsApp AI, escalations and management reporting for hospital front-desk teams.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%233b82f6'/%3E%3Cpath%20d='M28%2014h8v14h14v8H36v14h-8V36H14v-8h14z'%20fill='white'/%3E%3C/svg%3E">
 <title>MediCare AI — Hospital CRM Dashboard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -432,10 +423,41 @@
   .stars { color: var(--yellow); font-size: 13px; letter-spacing: 1px; }
 
   /* ─── RESPONSIVE ─── */
-  @media (max-width: 900px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .menu-btn { display:none; background:var(--card); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:8px 12px; font-size:16px; cursor:pointer; margin-right:10px; line-height:1; }
+  .sidebar-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1400; }
+  .sidebar-backdrop.show { display:block; }
+  .table-wrap { -webkit-overflow-scrolling:touch; }
+
+  @media (max-width: 1100px) {
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grid-2, .grid-12 { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .menu-btn { display:inline-flex; align-items:center; }
+    .sidebar {
+      display:flex !important; flex-direction:column;
+      position:fixed !important; top:0; left:0; bottom:0;
+      width:260px; max-width:82vw; overflow-y:auto;
+      transform:translateX(-100%); transition:transform .25s ease; z-index:1500;
+    }
+    .sidebar.open { transform:translateX(0); }
+    .main { margin-left:0 !important; width:100% !important; min-width:0; }
+    .topbar { padding:12px 16px; flex-wrap:wrap; gap:8px; }
+    .topbar-date { display:none; }
     .ai-grid { grid-template-columns: repeat(3, 1fr); }
+    .content { padding:16px; }
+  }
+
+  @media (max-width: 620px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .ai-grid { grid-template-columns: repeat(2, 1fr); }
+    .content { padding:12px; }
+    .page-header { flex-direction:column; align-items:flex-start; gap:10px; }
+    .topbar-title { font-size:15px; }
+    .search-box { width:100%; order:5; }
+    .table-wrap { overflow-x:auto; }
   }
 
   /* ─── TOAST ─── */
@@ -553,7 +575,7 @@
   <div class="sidebar-logo">
     <div class="logo-icon">🏥</div>
     <div>
-      <div class="logo-text">MediCare AI</div>
+      <div class="logo-text" id="sidebarBrandName">MediCare AI</div>
       <div class="logo-sub">Hospital CRM</div>
     </div>
   </div>
@@ -635,11 +657,15 @@
   </div>
 </nav>
 
+<!-- Mobile sidebar backdrop: tap outside the drawer to close it -->
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+
 <!-- ─── MAIN ─── -->
 <div class="main">
 
   <!-- TOPBAR -->
   <div class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
     <div class="topbar-title" id="page-title">Dashboard</div>
     <div class="topbar-date" id="topbar-date"></div>
     <div class="search-box">
@@ -674,8 +700,8 @@
     <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div>
-          <div class="page-h1">Good Morning, Dr. Muskan Gupta 👋</div>
-          <div class="page-sub">Today's overview — Monday, 17 August 2026</div>
+          <div class="page-h1" id="dashGreeting">Welcome, Dr. Muskan Gupta 👋</div>
+          <div class="page-sub" id="dashSubtitle">Loading today's overview…</div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="exportAppointmentsCSV()">📥 Export</button>
@@ -1465,12 +1491,37 @@
 
 <script>
 // =========================================================
+// HOSPITAL BRAND CONFIGURATION
+// =========================================================
+// Change these values once per client install. Nothing else in this file
+// needs to be edited to rebrand the dashboard.
+const HOSPITAL_CONFIG = {
+  name: "MediCare Hospital",        // Shown in the staff card, e.g. "Admin • MediCare Hospital"
+  shortName: "MediCare AI",         // Login card + sidebar brand
+  adminName: "Dr. Muskan Gupta",    // Dashboard greeting. Used when the signed-in profile has no full_name.
+  city: "",
+  contactEmail: "",
+  whatsappNumber: "",               // Display only. The live number lives in the n8n CONFIG node.
+  googleReviewUrl: ""
+};
+
+// =========================================================
 // SUPABASE CONFIGURATION
 // =========================================================
 // Paste your Supabase Project URL and ANON/PUBLISHABLE key here.
 // Do NOT put a service_role/secret key in this frontend file.
 const SUPABASE_URL = "https://qjuutemmnszsjkvobnpq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdXV0ZW1tbnN6c2prdm9ibnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTU2MjksImV4cCI6MjEwNjMzMTYyOX0.GW07465bBy6i7GInJtSF0Iy4WjCj-4xo2_zJ-qEbelM";
+
+// Every Supabase request is given a hard deadline. Without this a stalled
+// request leaves a page stuck on "Loading…" forever with no error shown.
+const REQUEST_TIMEOUT_MS = 20000;
+function fetchWithTimeout(input, init = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  return fetch(input, { ...init, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
 
 // ============================================
 // SUPABASE CLIENT
@@ -1499,7 +1550,8 @@ const supabaseClient = window.supabase.createClient(
       },
       persistSession: true,
       autoRefreshToken: true
-  } }
+    },
+    global: { fetch: fetchWithTimeout } }
 );
 
 // Make client available globally as well
@@ -1673,6 +1725,7 @@ function renderPage(page) {
 
 // ─── DASHBOARD ───
 function renderDashboard() {
+  setGreeting();
   renderDashAppts();
   renderActivity();
 }
@@ -2081,27 +2134,27 @@ async function renderPatients() {
 
     grid.innerHTML = patients.map(p => {
       const name = p.name || 'Unnamed Patient';
-      const initials = name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'PT';
+      const initials = escapeCRMHtml(name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'PT');
       const created = p.created_at
         ? new Date(p.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
         : '—';
-      const safeName = name.replace(/'/g, "\\'");
+      const safeAttr = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/[\r\n]+/g, ' ');
 
       return `
-        <div class="patient-card" onclick="showPatientDetail('${safeName}')">
+        <div class="patient-card" onclick="showPatientDetail('${safeAttr}')">
           <div class="patient-avatar" style="background:var(--accent-glow);color:var(--accent-light)">${initials}</div>
           <div style="flex:1">
-            <div class="patient-name">${name}</div>
-            <div class="patient-meta">📞 ${p.phone || '—'}</div>
-            <div class="patient-meta">✉️ ${p.email || '—'}</div>
+            <div class="patient-name">${escapeCRMHtml(name)}</div>
+            <div class="patient-meta">📞 ${escapeCRMHtml(p.phone || '—')}</div>
+            <div class="patient-meta">✉️ ${escapeCRMHtml(p.email || '—')}</div>
             <div class="patient-tags">
               <span class="tag">Registered: ${created}</span>
               <span class="badge confirmed">✅ Active</span>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('The WhatsApp messaging workflow for ${safeName} will be connected later.','info')">💬</button>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} profile will open.','info')">👁</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('The WhatsApp messaging workflow for ${safeAttr} will be connected later.','info')">💬</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeAttr} profile will open.','info')">👁</button>
           </div>
         </div>
       `;
@@ -2601,7 +2654,15 @@ function showToast(msg, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  // Build with textContent, never innerHTML: toast messages can include patient-supplied
+  // text (e.g. names coming from WhatsApp), which must never be parsed as HTML.
+  const iconEl = document.createElement('span');
+  iconEl.textContent = icons[type] || 'ℹ️';
+  const textEl = document.createElement('span');
+  textEl.textContent = String(msg == null ? '' : msg);
+  toast.appendChild(iconEl);
+  toast.appendChild(textEl);
+  if (!container) return;
   container.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100px)'; toast.style.transition = '0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
@@ -2930,7 +2991,7 @@ async function openUploadReport() {
 
     patientSelect.innerHTML = `
       <option value="">Select patient</option>
-      ${patients.map(p => `<option value="${p.id}">${p.name || 'Unnamed'} — ${p.phone || 'No phone'}</option>`).join('')}
+      ${patients.map(p => `<option value="${escapeCRMHtml(p.id)}">${escapeCRMHtml(p.name || 'Unnamed')} — ${escapeCRMHtml(p.phone || 'No phone')}</option>`).join('')}
     `;
   } catch (error) {
     console.error('REPORT PATIENT LOAD ERROR:', error);
@@ -3373,6 +3434,64 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 const d = new Date();
 document.getElementById('topbar-date').textContent = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 
+// ─── MOBILE SIDEBAR ───
+// Opens/closes the navigation drawer on small screens. Call toggleSidebar(false) to force-close.
+function toggleSidebar(force) {
+  const sidebar = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  if (!sidebar) return;
+  const shouldOpen = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', shouldOpen);
+  if (backdrop) backdrop.classList.toggle('show', shouldOpen);
+  document.body.style.overflow = shouldOpen ? 'hidden' : '';
+}
+// Close the drawer after picking a page, and when the viewport grows back to desktop.
+document.addEventListener('click', event => {
+  const item = event.target.closest && event.target.closest('.nav-item');
+  if (item && window.matchMedia('(max-width: 900px)').matches) toggleSidebar(false);
+});
+window.addEventListener('resize', () => { if (window.innerWidth > 900) toggleSidebar(false); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') toggleSidebar(false); });
+
+// ─── BRANDING ───
+// Applies HOSPITAL_CONFIG so a new client install is a one-line change.
+function applyBranding() {
+  const cfg = HOSPITAL_CONFIG || {};
+  const brand = cfg.shortName || 'Hospital CRM';
+  const setText = (id, value) => { const el = document.getElementById(id); if (el && value) el.textContent = value; };
+  setText('sidebarBrandName', brand);
+  setText('staffAuthTitle', brand);
+  if (brand) document.title = brand + ' — Hospital CRM Dashboard';
+}
+
+// ─── DASHBOARD GREETING ───
+// Time-aware greeting + the staff member's real name, instead of a hardcoded doctor.
+function setGreeting() {
+  const greetingEl = document.getElementById('dashGreeting');
+  const subEl = document.getElementById('dashSubtitle');
+  const now = new Date();
+  const hours = now.getHours();
+  const part = hours < 12 ? 'Good Morning' : hours < 17 ? 'Good Afternoon' : 'Good Evening';
+  const profile = (typeof staffProfile !== 'undefined' && staffProfile) ? staffProfile : null;
+  // Name shown in the greeting, in priority order:
+  //   1. the signed-in staff member's real full_name
+  //   2. HOSPITAL_CONFIG.adminName (the configured default, e.g. "Dr. Muskan Gupta")
+  //   3. the email's local part ("drmehta@x.com" -> "Drmehta")
+  const rawName = profile && (profile.full_name || profile.name || profile.display_name);
+  const emailName = profile && profile.email ? String(profile.email).split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()) : '';
+  const configName = (typeof HOSPITAL_CONFIG !== 'undefined' && HOSPITAL_CONFIG) ? HOSPITAL_CONFIG.adminName : '';
+  const name = rawName || configName || emailName;
+  const roleLabel = profile && typeof ROLE_LABELS !== 'undefined' ? (ROLE_LABELS[normalizedStaffRole(profile.role)] || '') : '';
+  if (greetingEl) greetingEl.textContent = name ? (part + ', ' + name + ' 👋') : (part + ' 👋');
+  if (subEl) {
+    const dateText = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    subEl.textContent = "Today's overview — " + dateText + (roleLabel ? ' • ' + roleLabel + ' view' : '');
+  }
+}
+
+// Apply branding as soon as the page loads so the login card is already rebranded.
+applyBranding();
+
 // ─── AUTHENTICATED STAFF / ROLE AUTHORIZATION ───
 // UI permissions improve usability; Supabase RLS remains the actual database security boundary.
 let staffSession = null;
@@ -3427,7 +3546,7 @@ function applyStaffPermissions() {
   const roleEl = document.getElementById('staffDisplayRole');
   const avatarEl = document.getElementById('staffAvatar');
   if (nameEl) nameEl.textContent = displayName;
-  if (roleEl) roleEl.textContent = roleLabel + ' • MediCare Hospital';
+  if (roleEl) roleEl.textContent = roleLabel + ' • ' + (HOSPITAL_CONFIG.name || 'Hospital');
   if (avatarEl) avatarEl.textContent = displayName.split(/\s+/).filter(Boolean).slice(0,2).map(part => part[0]).join('').toUpperCase() || 'ST';
 }
 function showStaffLogin(message) {
@@ -3485,6 +3604,7 @@ async function loadStaffProfileForSession(session) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const page = document.getElementById('page-' + currentPage);
     if (page) page.classList.add('active');
+    applyBranding();
     renderPage(currentPage);
     loadNotifications();
   } catch (error) {
@@ -3538,9 +3658,12 @@ async function staffSignOut() {
 }
 
 async function renderAuditLogs() {
-  if (!requireRole(['admin','manager'])) return;
   const tbody = document.getElementById('auditLogsTable');
   if (!tbody) return;
+  if (!requireRole(['admin','manager'])) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">You do not have permission to view audit logs.</td></tr>';
+    return;
+  }
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading audit events…</td></tr>';
   try {
     const { data, error } = await supabaseClient.from('audit_log').select('*').order('created_at', {ascending:false}).limit(500);
@@ -3556,13 +3679,16 @@ async function renderAuditLogs() {
     }).join('');
   } catch (error) {
     console.error('AUDIT LOG LOAD ERROR:', error);
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#fca5a5">Could not load audit logs: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
+    tbody.innerHTML = errorRow(5, 'Could not load audit logs: ' + (error.message || 'Unknown error'), 'renderAuditLogs');
   }
 }
 async function renderStaffManagement() {
-  if (!requireRole(['admin'])) return;
   const tbody = document.getElementById('staffManagementTable');
   if (!tbody) return;
+  if (!requireRole(['admin'])) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">You do not have permission to manage staff.</td></tr>';
+    return;
+  }
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading staff profiles…</td></tr>';
   try {
     const { data, error } = await supabaseClient.from('staff_profiles').select('*').order('created_at', {ascending:false}).limit(500);
@@ -3579,7 +3705,7 @@ async function renderStaffManagement() {
     }).join('');
   } catch (error) {
     console.error('STAFF MANAGEMENT LOAD ERROR:', error);
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#fca5a5">Could not load staff profiles: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
+    tbody.innerHTML = errorRow(5, 'Could not load staff profiles: ' + (error.message || 'Unknown error'), 'renderStaffManagement');
   }
 }
 async function saveStaffProfile(id) {
@@ -3662,7 +3788,7 @@ async function renderEscalations() {
     }).join('');
   } catch (error) {
     console.error('ESCALATIONS LOAD ERROR:', error);
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#fca5a5">Could not load escalations: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
+    tbody.innerHTML = errorRow(6, 'Could not load escalations: ' + (error.message || 'Unknown error'), 'renderEscalations');
     showToast('Escalations could not load. Check the escalations table and authenticated RLS policy.', 'error');
   }
 }
@@ -3720,7 +3846,7 @@ async function renderEnquiries() {
     }).join('');
   } catch (error) {
     console.error('ENQUIRIES LOAD ERROR:', error);
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#fca5a5">Could not load enquiries: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
+    tbody.innerHTML = errorRow(6, 'Could not load enquiries: ' + (error.message || 'Unknown error'), 'renderEnquiries');
     showToast('Enquiries could not load. Check the enquiries table and authenticated RLS policy.', 'error');
   }
 }
@@ -3748,6 +3874,11 @@ async function updateEnquiryStatus(button) {
 
 function escapeCRMHtml(value) {
   return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+// Renders a failed table load with an inline Retry button, so a page never becomes a dead end.
+function errorRow(colspan, message, retryFn) {
+  const retry = retryFn ? '<div style="margin-top:12px"><button class="btn btn-ghost" style="font-size:12px" onclick="' + retryFn + '()">⟳ Retry</button></div>' : '';
+  return '<tr><td colspan="' + colspan + '" style="text-align:center;padding:24px;color:#fca5a5">' + escapeCRMHtml(message) + retry + '</td></tr>';
 }
 function formatCRMDate(value) {
   if (!value) return '—';
@@ -4075,3 +4206,4 @@ function exportAppointmentsCSV() {
 
 </body>
 </html>
+
