@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- Private staff dashboard: keep it out of search engines so a login page is never indexed. -->
+
+lines 1-6
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="theme-color" content="#0b0f1a">
-
-lines 1-8
 <meta name="color-scheme" content="dark">
 <meta name="description" content="MediCare AI Hospital CRM — appointments, patients, WhatsApp AI, escalations and management reporting for hospital front-desk teams.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%233b82f6'/%3E%3Cpath%20d='M28%2014h8v14h14v8H36v14h-8V36H14v-8h14z'%20fill='white'/%3E%3C/svg%3E">
@@ -144,10 +144,27 @@ lines 1-8
     background: var(--card); border: 1px solid var(--border);
     border-radius: 8px; padding: 8px 14px; width: 240px;
     transition: border-color 0.2s;
+    position: relative;
   }
   .search-box:focus-within { border-color: var(--accent); }
   .search-box input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; width: 100%; }
   .search-box input::placeholder { color: var(--text-muted); }
+
+  /* Live global-search results */
+  .search-results {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+    max-height: 340px; overflow-y: auto; z-index: 1200; padding: 6px;
+  }
+  .search-item {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 9px 11px; border-radius: 7px; cursor: pointer;
+  }
+  .search-item:hover, .search-item.active { background: var(--card-hover); }
+  .search-item-name { font-size: 13px; font-weight: 600; }
+  .search-item-meta { font-size: 11px; color: var(--text-muted); }
+  .search-empty { padding: 12px; font-size: 12px; color: var(--text-muted); text-align: center; }
 
   .btn {
     padding: 8px 16px; border-radius: 8px; border: none;
@@ -307,20 +324,26 @@ lines 1-8
   .legend-val { margin-left: auto; font-weight: 600; font-size: 13px; }
 
   /* ─── PATIENT CARD ─── */
+  /* Two columns on desktop, ONE column on small screens. minmax(0,1fr) + min-width:0
+     stop long e-mail addresses and phone numbers from pushing the card wider than
+     the viewport. */
+  .patient-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .patient-card {
     background: var(--card-hover); border: 1px solid var(--border);
     border-radius: 10px; padding: 16px;
     display: flex; gap: 14px; align-items: flex-start;
     margin-bottom: 12px; cursor: pointer; transition: border-color 0.2s;
+    min-width: 0;
   }
+  .patient-card > div { min-width: 0; }
   .patient-card:hover { border-color: var(--accent); }
   .patient-avatar {
     width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 16px;
   }
-  .patient-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-  .patient-meta { font-size: 12px; color: var(--text-muted); }
+  .patient-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; overflow-wrap: anywhere; }
+  .patient-meta { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
   .patient-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
   /* ─── MODAL ─── */
@@ -448,6 +471,14 @@ lines 1-8
     .topbar-date { display:none; }
     .ai-grid { grid-template-columns: repeat(3, 1fr); }
     .content { padding:16px; }
+    /* Patient cards: single column so they can never spill off-screen. */
+    .patient-grid { grid-template-columns: 1fr; }
+    /* Summary boxes wrap instead of overflowing. */
+    .kpi-row { flex-wrap: wrap; }
+    .kpi-item { flex: 1 1 140px; min-width: 0; }
+    /* Long tab strips scroll sideways instead of being clipped. */
+    .tabs { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+    .tabs .tab { white-space: nowrap; flex: 0 0 auto; }
   }
 
   @media (max-width: 620px) {
@@ -458,6 +489,10 @@ lines 1-8
     .topbar-title { font-size:15px; }
     .search-box { width:100%; order:5; }
     .table-wrap { overflow-x:auto; }
+    .kpi-item { flex: 1 1 100%; }
+    .patient-card { padding: 13px; gap: 11px; }
+    .toast-container { left: 12px; right: 12px; bottom: 12px; }
+    .toast { min-width: 0; width: 100%; }
   }
 
   /* ─── TOAST ─── */
@@ -670,7 +705,10 @@ lines 1-8
     <div class="topbar-date" id="topbar-date"></div>
     <div class="search-box">
       <span>🔍</span>
-      <input type="text" placeholder="Search patients..." id="globalSearch" oninput="handleSearch(this.value)">
+      <input type="text" placeholder="Search patients..." id="globalSearch" autocomplete="off"
+             oninput="handleSearch(this.value)" onfocus="handleSearch(this.value)"
+             onkeydown="if(event.key==='Escape'){closeGlobalSearch();}">
+      <div class="search-results" id="globalSearchResults" style="display:none"></div>
     </div>
     <div class="notif-btn" id="notificationButton" onclick="showNotifications()">
       🔔
@@ -726,30 +764,30 @@ lines 1-8
       </div>
 
       <!-- Stat Cards -->
-      <div class="stats-grid">
+      <div class="stats-grid" id="dashStats">
         <div class="stat-card blue">
           <div class="stat-icon">📅</div>
-          <div class="stat-value">38</div>
+          <div class="stat-value" id="statTodayTotal">—</div>
           <div class="stat-label">Today's Appointments</div>
-          <div class="stat-change up">▲ 12% vs yesterday</div>
+          <div class="stat-change up" id="statTodayChange">Live from Supabase</div>
         </div>
         <div class="stat-card green">
           <div class="stat-icon">✅</div>
-          <div class="stat-value">26</div>
+          <div class="stat-value" id="statTodayCompleted">—</div>
           <div class="stat-label">Completed Today</div>
-          <div class="stat-change up">▲ 8% vs yesterday</div>
+          <div class="stat-change up">Status = completed</div>
         </div>
         <div class="stat-card yellow">
           <div class="stat-icon">⏳</div>
-          <div class="stat-value">8</div>
+          <div class="stat-value" id="statTodayPending">—</div>
           <div class="stat-label">Pending / Waiting</div>
-          <div class="stat-change down">▼ 3 new today</div>
+          <div class="stat-change down">Booked or reschedule pending</div>
         </div>
         <div class="stat-card red">
           <div class="stat-icon">❌</div>
-          <div class="stat-value">4</div>
+          <div class="stat-value" id="statTodayMissed">—</div>
           <div class="stat-label">Missed / No-Show</div>
-          <div class="stat-change down">AI follow-up triggered</div>
+          <div class="stat-change down">Status = missed or cancelled</div>
         </div>
       </div>
 
@@ -924,7 +962,7 @@ lines 1-8
         <div class="kpi-item"><div class="kpi-val" style="color:var(--purple)">247</div><div class="kpi-lbl">WhatsApp Active</div></div>
       </div>
 
-      <div id="patientGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px"></div>
+      <div id="patientGrid" class="patient-grid"></div>
     </div>
 
     <!-- ═══════════════════════════════ WHATSAPP PAGE ═══════════════════════════════ -->
@@ -1331,22 +1369,32 @@ lines 1-8
         <div class="card">
           <div class="card-header"><div class="card-title">🏥 Hospital Info</div></div>
           <div class="card-body">
-            <div class="form-group"><label class="form-label">Hospital Name</label><input class="form-input" value="MediCare Multi-Specialty Hospital"></div>
-            <div class="form-group"><label class="form-label">City</label><input class="form-input" value="Bhopal, Madhya Pradesh"></div>
-            <div class="form-group"><label class="form-label">Contact Email</label><input class="form-input" value="admin@medicare-bhopal.com"></div>
-            <div class="form-group"><label class="form-label">WhatsApp Business Number</label><input class="form-input" value="+91 98765 43210"></div>
-            <button class="btn btn-primary" onclick="showToast('Settings saved!','success')">💾 Save Changes</button>
+            <div class="form-group"><label class="form-label">Hospital Name</label><input id="setHospName" class="form-input" value="MediCare Multi-Specialty Hospital"></div>
+            <div class="form-group"><label class="form-label">City</label><input id="setHospCity" class="form-input" value="Bhopal, Madhya Pradesh"></div>
+            <div class="form-group"><label class="form-label">Contact Email</label><input id="setHospEmail" class="form-input" value="admin@medicare-bhopal.com"></div>
+            <div class="form-group"><label class="form-label">WhatsApp Business Number</label><input id="setHospPhone" class="form-input" value="+91 98765 43210"></div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-primary" id="saveHospitalBtn" onclick="saveHospitalSettings()">💾 Save Changes</button>
+              <span id="hospitalSaveNote" style="font-size:11px;color:var(--text-muted)"></span>
+            </div>
           </div>
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title">🤖 AI Automation Config</div></div>
           <div class="card-body">
-            <div class="form-group"><label class="form-label">WhatsApp Verify Token</label><input class="form-input" value="••••••••••••" type="password"></div>
-            <div class="form-group"><label class="form-label">Gemini AI Model</label><select class="form-select"><option>gemini-1.5-pro</option><option>gemini-1.5-flash</option></select></div>
-            <div class="form-group"><label class="form-label">Reminder Window (2h before)</label><input class="form-input" value="120 minutes"></div>
-            <div class="form-group"><label class="form-label">Max Retry Calls</label><input class="form-input" value="3" type="number"></div>
-            <div class="form-group"><label class="form-label">Error Alert Email</label><input class="form-input" value="tech@medicare-bhopal.com"></div>
-            <button class="btn btn-primary" onclick="showToast('AI configuration updated!','success')">💾 Save Config</button>
+            <div class="alert blue" style="font-size:12px;margin-bottom:16px">
+              <span>ℹ️</span>
+              <div>These values mirror the <code>CONFIG</code> node in the n8n workflow. The workflow itself is the source of truth for live automation; saving here stores the values for your records.</div>
+            </div>
+            <div class="form-group"><label class="form-label">WhatsApp Verify Token</label><input id="setAiToken" class="form-input" value="" type="password" placeholder="Not set"></div>
+            <div class="form-group"><label class="form-label">Gemini AI Model</label><select id="setAiModel" class="form-select"><option value="gemini-1.5-pro">gemini-1.5-pro</option><option value="gemini-1.5-flash">gemini-1.5-flash</option></select></div>
+            <div class="form-group"><label class="form-label">Reminder Window (2h before)</label><input id="setAiReminder" class="form-input" value="120"></div>
+            <div class="form-group"><label class="form-label">Max Retry Calls</label><input id="setAiRetry" class="form-input" value="3" type="number"></div>
+            <div class="form-group"><label class="form-label">Error Alert Email</label><input id="setAiAlertEmail" class="form-input" value="tech@medicare-bhopal.com"></div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-primary" id="saveAiBtn" onclick="saveAiSettings()">💾 Save Config</button>
+              <span id="aiSaveNote" style="font-size:11px;color:var(--text-muted)"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -1418,6 +1466,42 @@ lines 1-8
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="closeModal('patientModal')">Cancel</button>
         <button class="btn btn-primary" id="registerPatientBtn" onclick="registerPatient()">✅ Register Patient</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PATIENT DETAIL MODAL (opened from search results and patient cards) ─── -->
+<div class="modal-overlay" id="patientDetailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="patientDetailTitle">👤 Patient</div>
+      <button class="modal-close" onclick="closeModal('patientDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="patientDetailBody"></div>
+  </div>
+</div>
+
+<!-- ─── RESCHEDULE MODAL ─── -->
+<div class="modal-overlay" id="rescheduleModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">🔄 Reschedule Appointment</div>
+      <button class="modal-close" onclick="closeModal('rescheduleModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="report-note" id="rescheduleInfo" style="margin:0 0 16px"></p>
+      <div class="form-group">
+        <label class="form-label">New Date &amp; Time</label>
+        <input id="rescheduleWhen" class="form-input" type="datetime-local">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason (optional)</label>
+        <input id="rescheduleReason" class="form-input" placeholder="Patient requested a different slot">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('rescheduleModal')">Cancel</button>
+        <button class="btn btn-primary" id="rescheduleSubmit" onclick="submitReschedule()">✅ Save New Slot</button>
       </div>
     </div>
   </div>
@@ -1563,6 +1647,129 @@ console.log("Supabase client initialized successfully!");
 // ============================================
 // TEST SUPABASE CONNECTION
 // ============================================
+
+// ─── SETTINGS PERSISTENCE ───
+// Saves to the hospital_settings table when it exists (single row, id = 1),
+// and always mirrors to localStorage so the form still works before the SQL
+// migration that creates the table has been run.
+const SETTINGS_STORAGE_KEY = 'medicare_settings_v1';
+
+function settingsFromForm() {
+  const val = (id) => {
+    const el = document.getElementById(id);
+    return el ? String(el.value || '').trim() : '';
+  };
+  return {
+    hospital_name: val('setHospName'),
+    city: val('setHospCity'),
+    contact_email: val('setHospEmail'),
+    whatsapp_number: val('setHospPhone'),
+    ai_verify_token: val('setAiToken'),
+    ai_model: val('setAiModel'),
+    ai_reminder_window: val('setAiReminder'),
+    ai_max_retry: val('setAiRetry'),
+    ai_alert_email: val('setAiAlertEmail')
+  };
+}
+
+function loadLocalSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}') || {}; }
+  catch (e) { return {}; }
+}
+
+function saveLocalSettings(data) {
+  try { localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data)); return true; }
+  catch (e) { return false; }
+}
+
+function fillSettingsForm(data) {
+  if (!data) return;
+  const put = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && value != null && value !== '') el.value = value;
+  };
+  put('setHospName', data.hospital_name);
+  put('setHospCity', data.city);
+  put('setHospEmail', data.contact_email);
+  put('setHospPhone', data.whatsapp_number);
+  put('setAiToken', data.ai_verify_token);
+  put('setAiModel', data.ai_model);
+  put('setAiReminder', data.ai_reminder_window);
+  put('setAiRetry', data.ai_max_retry);
+  put('setAiAlertEmail', data.ai_alert_email);
+}
+
+async function loadSettings() {
+  // Show whatever we cached first, so the form is never blank while loading.
+  fillSettingsForm(loadLocalSettings());
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('hospital_settings')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) fillSettingsForm(data);
+  } catch (error) {
+    // Table not created yet (or RLS blocked it) - localStorage remains the store.
+    console.warn('hospital_settings not readable yet:', error.message);
+  }
+}
+
+async function persistSettings(keys, buttonId, noteId, successMessage) {
+  if (!requireRole(['admin','manager'])) return;
+  const button = document.getElementById(buttonId);
+  const note = document.getElementById(noteId);
+  const all = settingsFromForm();
+  const subset = {};
+  keys.forEach(k => { subset[k] = all[k]; });
+
+  const previous = button ? button.textContent : '';
+  if (button) { button.disabled = true; button.textContent = 'Saving…'; }
+  if (note) note.textContent = '';
+
+  // Always cache locally so the value survives even without the table.
+  const merged = Object.assign(loadLocalSettings(), subset);
+  saveLocalSettings(merged);
+
+  let where = 'saved in this browser';
+  try {
+    // Upsert the single settings row. If the table does not exist yet the
+    // error is caught and we fall back to the local copy.
+    const payload = Object.assign({ id: 1 }, subset);
+    const { error } = await supabaseClient
+      .from('hospital_settings')
+      .upsert(payload, { onConflict: 'id' });
+    if (error) throw error;
+    where = 'saved to Supabase';
+    void logAuditEvent('settings_updated', 'hospital_settings', '1', { fields: Object.keys(subset) });
+  } catch (error) {
+    console.warn('Settings saved locally only:', error.message);
+    where = 'saved in this browser (run the hospital_settings SQL to store it in Supabase)';
+  } finally {
+    if (button) { button.disabled = false; button.textContent = previous || '💾 Save'; }
+    if (note) note.textContent = where;
+  }
+
+  // Reflect branding immediately after saving hospital details.
+  if (keys.includes('hospital_name')) applyBranding();
+  showToast(successMessage + ' — ' + where + '.', 'success');
+}
+
+function saveHospitalSettings() {
+  return persistSettings(
+    ['hospital_name', 'city', 'contact_email', 'whatsapp_number'],
+    'saveHospitalBtn', 'hospitalSaveNote', 'Hospital info saved'
+  );
+}
+
+function saveAiSettings() {
+  return persistSettings(
+    ['ai_verify_token', 'ai_model', 'ai_reminder_window', 'ai_max_retry', 'ai_alert_email'],
+    'saveAiBtn', 'aiSaveNote', 'AI configuration saved'
+  );
+}
 
 async function testSupabaseConnection() {
   try {
@@ -1721,6 +1928,7 @@ function renderPage(page) {
   else if (page === 'enquiries') renderEnquiries();
   else if (page === 'staffManagement') renderStaffManagement();
   else if (page === 'auditLogs') renderAuditLogs();
+  else if (page === 'settings') loadSettings();
 }
 
 // ─── DASHBOARD ───
@@ -1728,6 +1936,22 @@ function renderDashboard() {
   setGreeting();
   renderDashAppts();
   renderActivity();
+}
+
+// Fills the four dashboard stat cards from the appointments that fall on today.
+// Kept in sync with the "Today's Appointments" table so the numbers can never
+// contradict the list underneath them.
+function updateDashboardStats(todays) {
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(value);
+  };
+  const list = todays || [];
+  const countStatus = (statuses) => list.filter(a => statuses.includes(String(a.status || 'booked').toLowerCase())).length;
+  set('statTodayTotal', list.length);
+  set('statTodayCompleted', countStatus(['completed']));
+  set('statTodayPending', countStatus(['booked', 'reschedule_pending', 'pending', 'confirmed']));
+  set('statTodayMissed', countStatus(['missed', 'cancelled', 'no_show', 'no-show']));
 }
 
 async function renderDashAppts() {
@@ -1823,7 +2047,34 @@ async function renderDashAppts() {
     });
 
     // 5. Render dashboard appointments
-    const show = appointments.slice(0, 6);
+    // "Today's Appointments" must actually mean TODAY. Filter by the local
+    // calendar day first, then take the first six of those.
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const localDayKey = (value) => {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return null;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const todays = appointments
+      .filter(a => a.slot_time && localDayKey(a.slot_time) === todayKey)
+      .sort((a, b) => new Date(a.slot_time) - new Date(b.slot_time));
+
+    updateDashboardStats(todays);
+
+    if (!todays.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">
+            No appointments scheduled for today (${now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}).
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const show = todays.slice(0, 6);
 
     tbody.innerHTML = show.map(a => {
 
@@ -1866,30 +2117,31 @@ async function renderDashAppts() {
       const status =
         a.status || 'booked';
 
+      // Escaped output + data attributes only: no patient text in handlers.
       return `
-        <tr>
+        <tr data-dash-appt-id="${escapeCRMHtml(a.id)}" data-patient-id="${escapeCRMHtml(a.patient_id || '')}">
 
           <td>
-            <strong>${patientName}</strong>
+            <strong>${escapeCRMHtml(patientName)}</strong>
             <br>
             <span style="font-size:11px;color:var(--text-muted)">
-              ${department}
+              ${escapeCRMHtml(department)}
             </span>
           </td>
 
           <td style="font-size:12px">
-            ${doctorName}
+            ${escapeCRMHtml(doctorName)}
           </td>
 
           <td>
             <strong>
-              ${dateText} ${timeText}
+              ${escapeCRMHtml(dateText)} ${escapeCRMHtml(timeText)}
             </strong>
           </td>
 
           <td>
             <span class="tag">
-              ${type}
+              ${escapeCRMHtml(type)}
             </span>
           </td>
 
@@ -1902,14 +2154,16 @@ async function renderDashAppts() {
             <button
               class="btn btn-ghost"
               style="font-size:11px;padding:4px 8px"
-              onclick="showToast('Sending a WhatsApp message to ${patientName}...','success')">
+              data-dash-action="wa"
+              title="Message on WhatsApp">
               💬
             </button>
 
             <button
               class="btn btn-ghost"
               style="font-size:11px;padding:4px 8px;margin-left:4px"
-              onclick="showToast('Opening ${patientName} details...','info')">
+              data-dash-action="view"
+              title="Open patient">
               👁
             </button>
 
@@ -1919,6 +2173,18 @@ async function renderDashAppts() {
       `;
 
     }).join('');
+
+    // Delegated handler for the dashboard row buttons.
+    tbody.onclick = (event) => {
+      const btn = event.target.closest && event.target.closest('[data-dash-action]');
+      if (!btn) return;
+      const row = btn.closest('tr[data-dash-appt-id]');
+      if (!row) return;
+      const action = btn.getAttribute('data-dash-action');
+      const patientId = row.getAttribute('data-patient-id');
+      if (action === 'view') { if (patientId) showPatientDetail(patientId); }
+      else showToast('WhatsApp messaging is not enabled in this demo build.', 'info');
+    };
 
   } catch (error) {
 
@@ -2057,40 +2323,58 @@ async function renderAppointments() {
     const type = a.reason || 'Consultation';
     const source = a.source || '—';
 
+    // All database / patient supplied text is escaped, and the row carries only
+    // the record id. Actions use a delegated listener, so a patient name can
+    // never break out of an attribute or be executed as script.
     return `
-      <tr>
-        <td><span class="tag">${String(a.id).slice(0,8)}</span></td>
+      <tr data-appt-id="${escapeCRMHtml(a.id)}">
+        <td><span class="tag">${escapeCRMHtml(String(a.id).slice(0,8))}</span></td>
         <td>
-          <strong>${patient}</strong>
-          <div style="font-size:11px;color:var(--text-muted)">${phone}</div>
+          <strong>${escapeCRMHtml(patient)}</strong>
+          <div style="font-size:11px;color:var(--text-muted)">${escapeCRMHtml(phone)}</div>
         </td>
-        <td style="font-size:13px">${doctor}</td>
-        <td><span class="tag">${dept}</span></td>
+        <td style="font-size:13px">${escapeCRMHtml(doctor)}</td>
+        <td><span class="tag">${escapeCRMHtml(dept)}</span></td>
         <td>
-          <strong>${timeText}</strong>
-          <div style="font-size:11px;color:var(--text-muted)">${dateText}</div>
+          <strong>${escapeCRMHtml(timeText)}</strong>
+          <div style="font-size:11px;color:var(--text-muted)">${escapeCRMHtml(dateText)}</div>
         </td>
-        <td>${type}</td>
+        <td>${escapeCRMHtml(type)}</td>
         <td>${statusBadge(a.status)}</td>
         <td>
           ${source === 'whatsapp'
             ? '<span class="badge blue">💬 WhatsApp</span>'
             : source !== '—'
-              ? `<span class="tag">${source}</span>`
+              ? `<span class="tag">${escapeCRMHtml(source)}</span>`
               : '<span style="font-size:11px;color:var(--text-muted)">—</span>'}
         </td>
         <td>
-          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px"
-            onclick="showToast('Opening reschedule dialog...','info')">🔄</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
-            onclick="cancelAppt('${a.id}','${patient}')">❌</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
-            onclick="showToast('Reminder sent to ${patient}!','success')">🔔</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" data-appt-action="reschedule"
+            title="Reschedule">🔄</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px" data-appt-action="cancel"
+            title="Cancel">❌</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px" data-appt-action="remind"
+            title="Send reminder">🔔</button>
         </td>
       </tr>
     `;
   }).join('');
 }
+
+// Delegated handler for the appointment action buttons (see renderAppointments).
+document.addEventListener('click', function (event) {
+  const btn = event.target.closest && event.target.closest('[data-appt-action]');
+  if (!btn) return;
+  const row = btn.closest('tr[data-appt-id]');
+  if (!row) return;
+  const id = row.getAttribute('data-appt-id');
+  const action = btn.getAttribute('data-appt-action');
+  const record = (window.__lastAppointmentRows || []).find(r => String(r.id) === String(id)) || {};
+  const name = record.patients?.name || 'this patient';
+  if (action === 'cancel') cancelAppt(id, name);
+  else if (action === 'reschedule') openReschedule(id, name, record.slot_time);
+  else if (action === 'remind') showToast(`Reminder queued for ${name}. WhatsApp delivery is not enabled in this demo build.`, 'info');
+});
 
 function filterApptTab(el, filter) {
   document.querySelectorAll('#page-appointments .tab').forEach(t => t.classList.remove('active'));
@@ -2099,8 +2383,86 @@ function filterApptTab(el, filter) {
   renderAppointments();
 }
 
-function cancelAppt(id, name) {
-  showToast(`${name}'s appointment has been cancelled. AI will notify them on WhatsApp.`, 'info');
+// ─── CANCEL APPOINTMENT (writes to the database) ───
+async function cancelAppt(id, name) {
+  if (!requireRole(['admin','manager','front desk'])) return;
+  if (!id) { showToast('That appointment has no id, so it could not be cancelled.', 'error'); return; }
+  if (!window.confirm(`Cancel ${name}'s appointment?\n\nThis updates the record in the database.`)) return;
+  try {
+    const { error } = await supabaseClient
+      .from('appointments')
+      .update({ status: 'cancelled' })
+      .eq('id', id);
+    if (error) throw error;
+    showToast(`${name}'s appointment was cancelled.`, 'success');
+    void logAuditEvent('appointment_cancelled', 'appointments', id, {});
+    if (typeof renderAppointments === 'function') renderAppointments();
+    if (typeof renderDashAppts === 'function') renderDashAppts();
+  } catch (error) {
+    console.error('CANCEL APPOINTMENT ERROR:', error);
+    showToast('Could not cancel the appointment: ' + (error.message || 'unknown error'), 'error');
+  }
+}
+
+// ─── RESCHEDULE APPOINTMENT (writes to the database) ───
+let rescheduleTarget = null;
+
+function openReschedule(id, name, currentSlot) {
+  if (!requireRole(['admin','manager','doctor','front desk'])) return;
+  if (!id) { showToast('That appointment has no id, so it could not be rescheduled.', 'error'); return; }
+  rescheduleTarget = id;
+  const info = document.getElementById('rescheduleInfo');
+  const when = document.getElementById('rescheduleWhen');
+  const reason = document.getElementById('rescheduleReason');
+  if (info) {
+    const current = currentSlot
+      ? new Date(currentSlot).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : 'unknown';
+    info.textContent = `Currently scheduled for ${current}. Choose a new slot for ${name}.`;
+  }
+  if (when) {
+    const base = currentSlot ? new Date(currentSlot) : new Date();
+    base.setMinutes(base.getMinutes() - base.getTimezoneOffset());
+    when.value = base.toISOString().slice(0, 16);
+  }
+  if (reason) reason.value = '';
+  const modal = document.getElementById('rescheduleModal');
+  if (modal) modal.classList.add('open');
+}
+
+async function submitReschedule() {
+  if (!rescheduleTarget) return;
+  const when = document.getElementById('rescheduleWhen');
+  const reason = document.getElementById('rescheduleReason');
+  const button = document.getElementById('rescheduleSubmit');
+  const value = when ? when.value : '';
+  if (!value) { showToast('Please choose the new date and time.', 'error'); return; }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) { showToast('That date/time could not be understood.', 'error'); return; }
+  const previous = button ? button.textContent : '';
+  if (button) { button.disabled = true; button.textContent = 'Saving…'; }
+  try {
+    const { error } = await supabaseClient
+      .from('appointments')
+      .update({ slot_time: parsed.toISOString(), status: 'reschedule_pending' })
+      .eq('id', rescheduleTarget);
+    if (error) throw error;
+    const target = rescheduleTarget;
+    rescheduleTarget = null;
+    closeModal('rescheduleModal');
+    showToast('Appointment rescheduled. The new slot was saved.', 'success');
+    void logAuditEvent('appointment_rescheduled', 'appointments', target, {
+      new_slot: parsed.toISOString(),
+      reason: reason && reason.value ? reason.value : null
+    });
+    if (typeof renderAppointments === 'function') renderAppointments();
+    if (typeof renderDashAppts === 'function') renderDashAppts();
+  } catch (error) {
+    console.error('RESCHEDULE ERROR:', error);
+    showToast('Could not reschedule: ' + (error.message || 'unknown error'), 'error');
+  } finally {
+    if (button) { button.disabled = false; button.textContent = previous || '✅ Save New Slot'; }
+  }
 }
 
 // ─── PATIENTS ───
@@ -2138,23 +2500,24 @@ async function renderPatients() {
       const created = p.created_at
         ? new Date(p.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
         : '—';
-      const safeAttr = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/[\r\n]+/g, ' ');
-
+      // No patient text goes into an inline handler. The id is carried on the
+      // element and a delegated listener (below) opens the detail view, which
+      // re-fetches the record, so nothing user-supplied is ever parsed as code.
       return `
-        <div class="patient-card" onclick="showPatientDetail('${safeAttr}')">
+        <div class="patient-card" data-patient-id="${escapeCRMHtml(p.id)}">
           <div class="patient-avatar" style="background:var(--accent-glow);color:var(--accent-light)">${initials}</div>
           <div style="flex:1">
             <div class="patient-name">${escapeCRMHtml(name)}</div>
             <div class="patient-meta">📞 ${escapeCRMHtml(p.phone || '—')}</div>
             <div class="patient-meta">✉️ ${escapeCRMHtml(p.email || '—')}</div>
             <div class="patient-tags">
-              <span class="tag">Registered: ${created}</span>
+              <span class="tag">Registered: ${escapeCRMHtml(created)}</span>
               <span class="badge confirmed">✅ Active</span>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('The WhatsApp messaging workflow for ${safeAttr} will be connected later.','info')">💬</button>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeAttr} profile will open.','info')">👁</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" data-action="wa">💬</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" data-action="view">👁</button>
           </div>
         </div>
       `;
@@ -2164,15 +2527,118 @@ async function renderPatients() {
     grid.innerHTML = `
       <div class="card" style="grid-column:1/-1">
         <div class="card-body" style="color:var(--red)">
-          Failed to load patients: ${error?.message || 'Unknown error'}
+          Failed to load patients: ${escapeCRMHtml(error?.message || 'Unknown error')}
         </div>
       </div>
     `;
   }
 }
 
-function showPatientDetail(name) {
-  showToast(`Opening ${name}'s full profile...`, 'info');
+// One delegated listener for the whole patient grid: works for cards rendered
+// later, and keeps patient text out of inline handlers entirely.
+document.addEventListener('click', function (event) {
+  const card = event.target.closest && event.target.closest('.patient-card');
+  if (!card) return;
+  const id = card.getAttribute('data-patient-id');
+  if (!id) return;
+  const actionBtn = event.target.closest && event.target.closest('[data-action]');
+  if (actionBtn) {
+    event.stopPropagation();
+    const action = actionBtn.getAttribute('data-action');
+    if (action === 'wa') {
+      showToast('WhatsApp messaging for this patient is not enabled in this demo build.', 'info');
+    } else {
+      showPatientDetail(id);
+    }
+    return;
+  }
+  showPatientDetail(id);
+});
+
+async function showPatientDetail(id) {
+  if (!id || !supabaseClient) return;
+  const modal = document.getElementById('patientDetailModal');
+  const title = document.getElementById('patientDetailTitle');
+  const body = document.getElementById('patientDetailBody');
+  if (!modal || !body) return;
+  title.textContent = '👤 Patient';
+  body.innerHTML = '<div style="color:var(--text-muted);padding:8px 0">Loading patient…</div>';
+  modal.classList.add('open');
+  try {
+    const { data: patient, error } = await supabaseClient
+      .from('patients')
+      .select('id, name, phone, email, created_at')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!patient) {
+      body.innerHTML = '<div class="alert red"><span>⚠️</span><div>That patient could not be found.</div></div>';
+      return;
+    }
+    title.textContent = '👤 ' + (patient.name || 'Unnamed Patient');
+    const registered = patient.created_at
+      ? new Date(patient.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '—';
+
+    // Recent appointments for this patient
+    const { data: appts } = await supabaseClient
+      .from('appointments')
+      .select('id, slot_time, status, reason')
+      .eq('patient_id', id)
+      .order('slot_time', { ascending: false })
+      .limit(5);
+
+    body.innerHTML = '';
+    const info = document.createElement('div');
+    info.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:18px';
+    [['📞 Phone', patient.phone], ['✉️ Email', patient.email], ['📅 Registered', registered]]
+      .forEach(([label, value]) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:10px;font-size:13px';
+        const l = document.createElement('span');
+        l.style.cssText = 'color:var(--text-muted);min-width:110px';
+        l.textContent = label;
+        const v = document.createElement('span');
+        v.style.cssText = 'font-weight:600;overflow-wrap:anywhere';
+        v.textContent = value || '—';
+        row.appendChild(l); row.appendChild(v);
+        info.appendChild(row);
+      });
+    body.appendChild(info);
+
+    const heading = document.createElement('div');
+    heading.className = 'section-title';
+    heading.textContent = 'Recent Appointments';
+    body.appendChild(heading);
+
+    if (!appts || !appts.length) {
+      const none = document.createElement('div');
+      none.style.cssText = 'font-size:12px;color:var(--text-muted)';
+      none.textContent = 'No appointments recorded for this patient.';
+      body.appendChild(none);
+    } else {
+      appts.forEach(a => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)';
+        const when = document.createElement('span');
+        when.style.cssText = 'font-size:12px;flex:1';
+        when.textContent = a.slot_time
+          ? new Date(a.slot_time).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+          : '—';
+        const status = document.createElement('span');
+        status.innerHTML = statusBadge(a.status || 'booked');
+        row.appendChild(when); row.appendChild(status);
+        body.appendChild(row);
+      });
+    }
+  } catch (error) {
+    console.error('PATIENT DETAIL ERROR:', error);
+    body.innerHTML = '';
+    const err = document.createElement('div');
+    err.className = 'alert red';
+    err.textContent = 'Could not load patient: ' + (error.message || 'unknown error');
+    body.appendChild(err);
+  }
 }
 
 // ─── WHATSAPP ───
@@ -3414,9 +3880,89 @@ document.addEventListener('click', function(event) {
   }
 });
 
+// ─── GLOBAL PATIENT SEARCH ───
+// Really searches the patients table (name, phone, email) using PostgREST's
+// ilike filters, and shows a clickable result list. Results are built with DOM
+// nodes (textContent) so patient-supplied text can never be parsed as HTML.
+let globalSearchTimer = null;
+let globalSearchSeq = 0;
+
 function handleSearch(val) {
-  if (val.length > 2) showToast(`Searching for "${val}"...`, 'info');
+  const box = document.getElementById('globalSearchResults');
+  if (!box) return;
+  const query = String(val || '').trim();
+  clearTimeout(globalSearchTimer);
+  if (query.length < 2) { closeGlobalSearch(); return; }
+  globalSearchTimer = setTimeout(() => runGlobalSearch(query), 220);
 }
+
+function closeGlobalSearch() {
+  const box = document.getElementById('globalSearchResults');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+}
+
+async function runGlobalSearch(query) {
+  const box = document.getElementById('globalSearchResults');
+  if (!box) return;
+  if (!supabaseClient) { closeGlobalSearch(); return; }
+  const seq = ++globalSearchSeq;
+  // Strip characters that would break the PostgREST or-filter syntax.
+  const safe = query.replace(/[,()%*\\]/g, ' ').trim();
+  if (!safe) { closeGlobalSearch(); return; }
+  box.style.display = 'block';
+  box.innerHTML = '<div class="search-empty">Searching…</div>';
+  try {
+    const { data, error } = await supabaseClient
+      .from('patients')
+      .select('id, name, phone, email')
+      .or(`name.ilike.%${safe}%,phone.ilike.%${safe}%,email.ilike.%${safe}%`)
+      .limit(8);
+    if (seq !== globalSearchSeq) return; // a newer keystroke won
+    if (error) throw error;
+    if (!data || !data.length) {
+      box.innerHTML = '';
+      const empty = document.createElement('div');
+      empty.className = 'search-empty';
+      empty.textContent = `No patients match “${query}”.`;
+      box.appendChild(empty);
+      return;
+    }
+    box.innerHTML = '';
+    data.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'search-item';
+      const name = document.createElement('div');
+      name.className = 'search-item-name';
+      name.textContent = p.name || 'Unnamed Patient';
+      const meta = document.createElement('div');
+      meta.className = 'search-item-meta';
+      meta.textContent = [p.phone, p.email].filter(Boolean).join(' · ') || 'No contact details';
+      item.appendChild(name);
+      item.appendChild(meta);
+      item.addEventListener('click', () => {
+        closeGlobalSearch();
+        const input = document.getElementById('globalSearch');
+        if (input) input.value = '';
+        showPatientDetail(p.id);
+      });
+      box.appendChild(item);
+    });
+  } catch (error) {
+    if (seq !== globalSearchSeq) return;
+    console.error('GLOBAL SEARCH ERROR:', error);
+    box.innerHTML = '';
+    const err = document.createElement('div');
+    err.className = 'search-empty';
+    err.textContent = 'Search failed: ' + (error.message || 'unknown error');
+    box.appendChild(err);
+  }
+}
+
+// Close the results when clicking anywhere else.
+document.addEventListener('click', function (event) {
+  const box = document.querySelector('.search-box');
+  if (box && !box.contains(event.target)) closeGlobalSearch();
+});
 
 function filterApptTab(el, filter) {
   document.querySelectorAll('#page-appointments .tab').forEach(t => t.classList.remove('active'));
@@ -3457,7 +4003,10 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape') togg
 // Applies HOSPITAL_CONFIG so a new client install is a one-line change.
 function applyBranding() {
   const cfg = HOSPITAL_CONFIG || {};
-  const brand = cfg.shortName || 'Hospital CRM';
+  // Saved hospital info (from the Settings page) wins over the built-in defaults.
+  const saved = loadLocalSettings();
+  const name = saved.hospital_name || cfg.name || '';
+  const brand = cfg.shortName || name || 'Hospital CRM';
   const setText = (id, value) => { const el = document.getElementById(id); if (el && value) el.textContent = value; };
   setText('sidebarBrandName', brand);
   setText('staffAuthTitle', brand);
@@ -3671,10 +4220,12 @@ async function renderAuditLogs() {
     if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No audit events found.</td></tr>'; return; }
     tbody.innerHTML = data.map(row => {
       const time = row.created_at || row.timestamp || row.event_time;
-      const actor = row.staff_name || row.user_email || row.actor_email || row.user_id || row.staff_id || 'Staff';
-      const action = row.action || row.event_type || row.event || '—';
-      const entity = [row.entity_type || row.table_name || row.record_type, row.entity_id || row.record_id].filter(Boolean).join(' / ') || '—';
-      const detail = row.metadata || row.details || row.payload || row.description || '';
+      const actorEmail = row.actor_email || row.staff_name || row.user_email || row.user_id || row.staff_id || 'Staff';
+      const actorRole = row.actor_role || '';
+      const actor = actorRole ? String(actorEmail) + ' (' + actorRole + ')' : actorEmail;
+      const action = row.action || row.event_type || row.event || '-';
+      const entity = [row.entity || row.entity_type || row.table_name || row.record_type, row.entity_id || row.record_id].filter(Boolean).join(' / ') || '-';
+      const detail = row.details || row.metadata || row.payload || row.description || '';
       return '<tr><td>' + escapeCRMHtml(formatCRMDate(time)) + '</td><td>' + escapeCRMHtml(actor) + '</td><td><span class="badge blue">' + escapeCRMHtml(action) + '</span></td><td>' + escapeCRMHtml(entity) + '</td><td><div class="enquiry-message">' + escapeCRMHtml(typeof detail === 'object' ? JSON.stringify(detail) : detail || '—') + '</div></td></tr>';
     }).join('');
   } catch (error) {
@@ -4206,4 +4757,3 @@ function exportAppointmentsCSV() {
 
 </body>
 </html>
-
