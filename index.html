@@ -2,15 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- Private staff dashboard: keep it out of search engines so a login page is never indexed. -->
-
-lines 1-6
-<meta name="robots" content="noindex, nofollow, noarchive">
-<meta name="theme-color" content="#0b0f1a">
-<meta name="color-scheme" content="dark">
-<meta name="description" content="MediCare AI Hospital CRM — appointments, patients, WhatsApp AI, escalations and management reporting for hospital front-desk teams.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%233b82f6'/%3E%3Cpath%20d='M28%2014h8v14h14v8H36v14h-8V36H14v-8h14z'%20fill='white'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MediCare AI — Hospital CRM Dashboard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -144,27 +136,10 @@ lines 1-6
     background: var(--card); border: 1px solid var(--border);
     border-radius: 8px; padding: 8px 14px; width: 240px;
     transition: border-color 0.2s;
-    position: relative;
   }
   .search-box:focus-within { border-color: var(--accent); }
   .search-box input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; width: 100%; }
   .search-box input::placeholder { color: var(--text-muted); }
-
-  /* Live global-search results */
-  .search-results {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; box-shadow: 0 18px 40px rgba(0,0,0,0.45);
-    max-height: 340px; overflow-y: auto; z-index: 1200; padding: 6px;
-  }
-  .search-item {
-    display: flex; flex-direction: column; gap: 2px;
-    padding: 9px 11px; border-radius: 7px; cursor: pointer;
-  }
-  .search-item:hover, .search-item.active { background: var(--card-hover); }
-  .search-item-name { font-size: 13px; font-weight: 600; }
-  .search-item-meta { font-size: 11px; color: var(--text-muted); }
-  .search-empty { padding: 12px; font-size: 12px; color: var(--text-muted); text-align: center; }
 
   .btn {
     padding: 8px 16px; border-radius: 8px; border: none;
@@ -324,26 +299,20 @@ lines 1-6
   .legend-val { margin-left: auto; font-weight: 600; font-size: 13px; }
 
   /* ─── PATIENT CARD ─── */
-  /* Two columns on desktop, ONE column on small screens. minmax(0,1fr) + min-width:0
-     stop long e-mail addresses and phone numbers from pushing the card wider than
-     the viewport. */
-  .patient-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .patient-card {
     background: var(--card-hover); border: 1px solid var(--border);
     border-radius: 10px; padding: 16px;
     display: flex; gap: 14px; align-items: flex-start;
     margin-bottom: 12px; cursor: pointer; transition: border-color 0.2s;
-    min-width: 0;
   }
-  .patient-card > div { min-width: 0; }
   .patient-card:hover { border-color: var(--accent); }
   .patient-avatar {
     width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 16px;
   }
-  .patient-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; overflow-wrap: anywhere; }
-  .patient-meta { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+  .patient-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .patient-meta { font-size: 12px; color: var(--text-muted); }
   .patient-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
   /* ─── MODAL ─── */
@@ -446,53 +415,10 @@ lines 1-6
   .stars { color: var(--yellow); font-size: 13px; letter-spacing: 1px; }
 
   /* ─── RESPONSIVE ─── */
-  .menu-btn { display:none; background:var(--card); border:1px solid var(--border); color:var(--text);
-    border-radius:8px; padding:8px 12px; font-size:16px; cursor:pointer; margin-right:10px; line-height:1; }
-  .sidebar-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1400; }
-  .sidebar-backdrop.show { display:block; }
-  .table-wrap { -webkit-overflow-scrolling:touch; }
-
-  @media (max-width: 1100px) {
-    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid-2, .grid-12 { grid-template-columns: 1fr; }
-  }
-
   @media (max-width: 900px) {
-    .menu-btn { display:inline-flex; align-items:center; }
-    .sidebar {
-      display:flex !important; flex-direction:column;
-      position:fixed !important; top:0; left:0; bottom:0;
-      width:260px; max-width:82vw; overflow-y:auto;
-      transform:translateX(-100%); transition:transform .25s ease; z-index:1500;
-    }
-    .sidebar.open { transform:translateX(0); }
-    .main { margin-left:0 !important; width:100% !important; min-width:0; }
-    .topbar { padding:12px 16px; flex-wrap:wrap; gap:8px; }
-    .topbar-date { display:none; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-12 { grid-template-columns: 1fr; }
     .ai-grid { grid-template-columns: repeat(3, 1fr); }
-    .content { padding:16px; }
-    /* Patient cards: single column so they can never spill off-screen. */
-    .patient-grid { grid-template-columns: 1fr; }
-    /* Summary boxes wrap instead of overflowing. */
-    .kpi-row { flex-wrap: wrap; }
-    .kpi-item { flex: 1 1 140px; min-width: 0; }
-    /* Long tab strips scroll sideways instead of being clipped. */
-    .tabs { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
-    .tabs .tab { white-space: nowrap; flex: 0 0 auto; }
-  }
-
-  @media (max-width: 620px) {
-    .stats-grid { grid-template-columns: 1fr; }
-    .ai-grid { grid-template-columns: repeat(2, 1fr); }
-    .content { padding:12px; }
-    .page-header { flex-direction:column; align-items:flex-start; gap:10px; }
-    .topbar-title { font-size:15px; }
-    .search-box { width:100%; order:5; }
-    .table-wrap { overflow-x:auto; }
-    .kpi-item { flex: 1 1 100%; }
-    .patient-card { padding: 13px; gap: 11px; }
-    .toast-container { left: 12px; right: 12px; bottom: 12px; }
-    .toast { min-width: 0; width: 100%; }
   }
 
   /* ─── TOAST ─── */
@@ -598,6 +524,73 @@ lines 1-6
   .enquiry-message { max-width:340px; white-space:pre-wrap; overflow-wrap:anywhere; }
   @media (max-width:600px) { .auth-card { padding:22px; } .enquiry-message { max-width:220px; } }
 
+
+/* Responsive layout: use the same page without forcing browser Desktop mode */
+@media (max-width: 1100px) {
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .main { min-width: 0; }
+  .content { padding: 20px; }
+  .topbar { padding: 12px 20px; flex-wrap: wrap; }
+  .search-box { width: min(240px, 100%); }
+  .topbar-date { font-size: 11px; }
+}
+@media (max-width: 700px) {
+  html, body { width: 100%; min-width: 0; }
+  body { display: block; overflow-x: hidden; overflow-y: auto; }
+  .sidebar {
+    position: sticky; top: 0; left: auto;
+    width: 100%; height: auto; max-height: 112px;
+    z-index: 200; overflow-x: auto; overflow-y: hidden;
+    display: flex; flex-direction: row; align-items: stretch;
+    border-right: 0; border-bottom: 1px solid var(--border);
+    scrollbar-width: thin;
+  }
+  .sidebar-logo, .sidebar-footer { display: none !important; }
+  .sidebar-section {
+    display: flex; flex: 0 0 auto; align-items: center;
+    gap: 6px; padding: 8px; border-right: 1px solid var(--border);
+  }
+  .sidebar-section .section-label { display: none; }
+  .sidebar-section .nav-item {
+    flex: 0 0 auto; white-space: nowrap;
+    padding: 10px 12px; font-size: 12px;
+  }
+  .sidebar-section .nav-icon { margin-right: 4px; }
+  .main {
+    margin-left: 0 !important; width: 100%;
+    height: auto; min-height: calc(100vh - 112px);
+    overflow: visible; display: flex;
+  }
+  .topbar {
+    position: sticky; top: 0; padding: 12px;
+    gap: 10px; flex-wrap: wrap;
+  }
+  .topbar-title { font-size: 16px; min-width: 40%; }
+  .topbar-date { order: 2; }
+  .search-box { order: 3; flex: 1 1 100%; width: 100%; }
+  .topbar > .btn { order: 4; flex: 1 1 100%; justify-content: center; }
+  .content { padding: 14px; min-width: 0; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat-card { padding: 14px; min-width: 0; }
+  .grid-2, .grid-12, .workflow-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .ai-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-header { gap: 10px; flex-wrap: wrap; }
+  .page-h1 { font-size: clamp(20px, 5vw, 28px); }
+  .card { min-width: 0; }
+  table { min-width: 620px; }
+  .table-container, .table-wrap, .data-table-wrap {
+    max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  input, select, textarea { max-width: 100%; }
+  .modal, .modal-content, .auth-card { max-width: calc(100vw - 24px); }
+}
+@media (max-width: 380px) {
+  .stats-grid, .ai-grid { grid-template-columns: minmax(0, 1fr); }
+  .content { padding: 10px; }
+  .sidebar-section { padding: 6px; }
+  .sidebar-section .nav-item { padding: 9px 10px; }
+}
+
 </style>
 
 <!-- Supabase JS Client -->
@@ -610,7 +603,7 @@ lines 1-6
   <div class="sidebar-logo">
     <div class="logo-icon">🏥</div>
     <div>
-      <div class="logo-text" id="sidebarBrandName">MediCare AI</div>
+      <div class="logo-text">MediCare AI</div>
       <div class="logo-sub">Hospital CRM</div>
     </div>
   </div>
@@ -692,23 +685,16 @@ lines 1-6
   </div>
 </nav>
 
-<!-- Mobile sidebar backdrop: tap outside the drawer to close it -->
-<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
-
 <!-- ─── MAIN ─── -->
 <div class="main">
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
     <div class="topbar-title" id="page-title">Dashboard</div>
     <div class="topbar-date" id="topbar-date"></div>
     <div class="search-box">
       <span>🔍</span>
-      <input type="text" placeholder="Search patients..." id="globalSearch" autocomplete="off"
-             oninput="handleSearch(this.value)" onfocus="handleSearch(this.value)"
-             onkeydown="if(event.key==='Escape'){closeGlobalSearch();}">
-      <div class="search-results" id="globalSearchResults" style="display:none"></div>
+      <input type="text" placeholder="Search patients..." id="globalSearch" oninput="handleSearch(this.value)">
     </div>
     <div class="notif-btn" id="notificationButton" onclick="showNotifications()">
       🔔
@@ -738,8 +724,8 @@ lines 1-6
     <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div>
-          <div class="page-h1" id="dashGreeting">Welcome, Dr. Muskan Gupta 👋</div>
-          <div class="page-sub" id="dashSubtitle">Loading today's overview…</div>
+          <div class="page-h1" id="dashboardGreeting">Hospital Dashboard 👋</div>
+          <div class="page-sub" id="dashboardDateLabel">Today's overview</div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="exportAppointmentsCSV()">📥 Export</button>
@@ -752,8 +738,9 @@ lines 1-6
         <div class="ai-header">
           <span class="ai-icon">🤖</span>
           <span class="ai-title">AI Automation Status</span>
-          <span style="margin-left:8px"><span class="live-dot"></span> <span style="font-size:11px;color:var(--green);margin-left:4px">All Systems Live</span></span>
+          <span style="margin-left:8px"><span class="live-dot"></span> <span style="font-size:11px;color:var(--green);margin-left:4px">Integration status: verify in n8n</span></span>
         </div>
+        <div style="font-size:11px;color:var(--text-muted);margin:4px 0 12px">Sample/demo metrics — not verified live activity</div>
         <div class="ai-grid">
           <div class="ai-metric"><div class="ai-metric-val">247</div><div class="ai-metric-lbl">WhatsApp Handled</div></div>
           <div class="ai-metric"><div class="ai-metric-val">89</div><div class="ai-metric-lbl">AI Calls Made</div></div>
@@ -764,30 +751,30 @@ lines 1-6
       </div>
 
       <!-- Stat Cards -->
-      <div class="stats-grid" id="dashStats">
+      <div class="stats-grid">
         <div class="stat-card blue">
           <div class="stat-icon">📅</div>
-          <div class="stat-value" id="statTodayTotal">—</div>
+          <div class="stat-value">38</div>
           <div class="stat-label">Today's Appointments</div>
-          <div class="stat-change up" id="statTodayChange">Live from Supabase</div>
+          <div class="stat-change up">▲ 12% vs yesterday</div>
         </div>
         <div class="stat-card green">
           <div class="stat-icon">✅</div>
-          <div class="stat-value" id="statTodayCompleted">—</div>
+          <div class="stat-value">26</div>
           <div class="stat-label">Completed Today</div>
-          <div class="stat-change up">Status = completed</div>
+          <div class="stat-change up">▲ 8% vs yesterday</div>
         </div>
         <div class="stat-card yellow">
           <div class="stat-icon">⏳</div>
-          <div class="stat-value" id="statTodayPending">—</div>
+          <div class="stat-value">8</div>
           <div class="stat-label">Pending / Waiting</div>
-          <div class="stat-change down">Booked or reschedule pending</div>
+          <div class="stat-change down">▼ 3 new today</div>
         </div>
         <div class="stat-card red">
           <div class="stat-icon">❌</div>
-          <div class="stat-value" id="statTodayMissed">—</div>
+          <div class="stat-value">4</div>
           <div class="stat-label">Missed / No-Show</div>
-          <div class="stat-change down">Status = missed or cancelled</div>
+          <div class="stat-change down">AI follow-up triggered</div>
         </div>
       </div>
 
@@ -928,7 +915,7 @@ lines 1-6
         <div class="card-header">
           <div class="card-title">📋 Appointment List</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <span style="font-size:12px;color:var(--text-muted)">17 Aug 2026</span>
+            <span style="font-size:12px;color:var(--text-muted)" id="appointmentsDateLabel"></span>
             <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="exportAppointmentsCSV()">📥 CSV</button>
           </div>
         </div>
@@ -956,13 +943,13 @@ lines 1-6
       </div>
 
       <div class="kpi-row">
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">1,284</div><div class="kpi-lbl">Total Registered</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">1,284</div><div class="kpi-lbl">Total Registered (demo)</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">89</div><div class="kpi-lbl">Active This Month</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--yellow)">34</div><div class="kpi-lbl">New This Week</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--purple)">247</div><div class="kpi-lbl">WhatsApp Active</div></div>
       </div>
 
-      <div id="patientGrid" class="patient-grid"></div>
+      <div id="patientGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px"></div>
     </div>
 
     <!-- ═══════════════════════════════ WHATSAPP PAGE ═══════════════════════════════ -->
@@ -1147,7 +1134,7 @@ lines 1-6
 
       <div class="stats-grid">
         <div class="stat-card blue"><div class="stat-icon">📅</div><div class="stat-value">1,247</div><div class="stat-label">Total Appointments</div><div class="stat-change up">▲ 18% vs last month</div></div>
-        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">₹8.4L</div><div class="stat-label">Revenue (Est.)</div><div class="stat-change up">▲ 22% vs last month</div></div>
+        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">₹8.4L</div><div class="stat-label">Revenue (demo estimate)</div><div class="stat-change up">▲ 22% vs last month</div></div>
         <div class="stat-card purple"><div class="stat-icon">🤖</div><div class="stat-value">94%</div><div class="stat-label">AI Automation Rate</div><div class="stat-change up">Saving 40+ staff hours</div></div>
         <div class="stat-card yellow"><div class="stat-icon">😊</div><div class="stat-value">4.6★</div><div class="stat-label">Patient Satisfaction</div><div class="stat-change up">▲ 0.3 vs last month</div></div>
       </div>
@@ -1175,7 +1162,7 @@ lines 1-6
       </div>
 
       <div class="kpi-row">
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">3,847</div><div class="kpi-lbl">Total Executions Today</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">3,847</div><div class="kpi-lbl">Executions Today (demo)</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">99.2%</div><div class="kpi-lbl">Success Rate</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--red)">30</div><div class="kpi-lbl">Errors (Auto-Alerted)</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">4</div><div class="kpi-lbl">Active Workflows</div></div>
@@ -1369,32 +1356,22 @@ lines 1-6
         <div class="card">
           <div class="card-header"><div class="card-title">🏥 Hospital Info</div></div>
           <div class="card-body">
-            <div class="form-group"><label class="form-label">Hospital Name</label><input id="setHospName" class="form-input" value="MediCare Multi-Specialty Hospital"></div>
-            <div class="form-group"><label class="form-label">City</label><input id="setHospCity" class="form-input" value="Bhopal, Madhya Pradesh"></div>
-            <div class="form-group"><label class="form-label">Contact Email</label><input id="setHospEmail" class="form-input" value="admin@medicare-bhopal.com"></div>
-            <div class="form-group"><label class="form-label">WhatsApp Business Number</label><input id="setHospPhone" class="form-input" value="+91 98765 43210"></div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-              <button class="btn btn-primary" id="saveHospitalBtn" onclick="saveHospitalSettings()">💾 Save Changes</button>
-              <span id="hospitalSaveNote" style="font-size:11px;color:var(--text-muted)"></span>
-            </div>
+            <div class="form-group"><label class="form-label">Hospital Name</label><input class="form-input" value="MediCare Multi-Specialty Hospital"></div>
+            <div class="form-group"><label class="form-label">City</label><input class="form-input" value="Bhopal, Madhya Pradesh"></div>
+            <div class="form-group"><label class="form-label">Contact Email</label><input class="form-input" value="admin@medicare-bhopal.com"></div>
+            <div class="form-group"><label class="form-label">WhatsApp Business Number</label><input class="form-input" value="+91 98765 43210"></div>
+            <button class="btn btn-primary" onclick="showToast('Settings saved!','success')">💾 Save Changes</button>
           </div>
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title">🤖 AI Automation Config</div></div>
           <div class="card-body">
-            <div class="alert blue" style="font-size:12px;margin-bottom:16px">
-              <span>ℹ️</span>
-              <div>These values mirror the <code>CONFIG</code> node in the n8n workflow. The workflow itself is the source of truth for live automation; saving here stores the values for your records.</div>
-            </div>
-            <div class="form-group"><label class="form-label">WhatsApp Verify Token</label><input id="setAiToken" class="form-input" value="" type="password" placeholder="Not set"></div>
-            <div class="form-group"><label class="form-label">Gemini AI Model</label><select id="setAiModel" class="form-select"><option value="gemini-1.5-pro">gemini-1.5-pro</option><option value="gemini-1.5-flash">gemini-1.5-flash</option></select></div>
-            <div class="form-group"><label class="form-label">Reminder Window (2h before)</label><input id="setAiReminder" class="form-input" value="120"></div>
-            <div class="form-group"><label class="form-label">Max Retry Calls</label><input id="setAiRetry" class="form-input" value="3" type="number"></div>
-            <div class="form-group"><label class="form-label">Error Alert Email</label><input id="setAiAlertEmail" class="form-input" value="tech@medicare-bhopal.com"></div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-              <button class="btn btn-primary" id="saveAiBtn" onclick="saveAiSettings()">💾 Save Config</button>
-              <span id="aiSaveNote" style="font-size:11px;color:var(--text-muted)"></span>
-            </div>
+            <div class="form-group"><label class="form-label">WhatsApp Verify Token</label><div class="form-input" style="height:auto;min-height:42px;display:flex;align-items:center;color:var(--text-muted)">Configured server-side in n8n only</div><small style="color:var(--text-muted)">Do not store verification tokens in this browser page.</small></div>
+            <div class="form-group"><label class="form-label">Gemini AI Model</label><select class="form-select"><option>gemini-2.5-flash</option><option>gemini-2.5-pro</option></select></div>
+            <div class="form-group"><label class="form-label">Reminder Window (2h before)</label><input class="form-input" value="120 minutes"></div>
+            <div class="form-group"><label class="form-label">Max Retry Calls</label><input class="form-input" value="3" type="number"></div>
+            <div class="form-group"><label class="form-label">Error Alert Email</label><input class="form-input" value="tech@medicare-bhopal.com"></div>
+            <button class="btn btn-primary" onclick="showToast('AI configuration updated!','success')">💾 Save Config</button>
           </div>
         </div>
       </div>
@@ -1471,42 +1448,6 @@ lines 1-6
   </div>
 </div>
 
-<!-- ─── PATIENT DETAIL MODAL (opened from search results and patient cards) ─── -->
-<div class="modal-overlay" id="patientDetailModal">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title" id="patientDetailTitle">👤 Patient</div>
-      <button class="modal-close" onclick="closeModal('patientDetailModal')">✕</button>
-    </div>
-    <div class="modal-body" id="patientDetailBody"></div>
-  </div>
-</div>
-
-<!-- ─── RESCHEDULE MODAL ─── -->
-<div class="modal-overlay" id="rescheduleModal">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title">🔄 Reschedule Appointment</div>
-      <button class="modal-close" onclick="closeModal('rescheduleModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <p class="report-note" id="rescheduleInfo" style="margin:0 0 16px"></p>
-      <div class="form-group">
-        <label class="form-label">New Date &amp; Time</label>
-        <input id="rescheduleWhen" class="form-input" type="datetime-local">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Reason (optional)</label>
-        <input id="rescheduleReason" class="form-input" placeholder="Patient requested a different slot">
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-ghost" onclick="closeModal('rescheduleModal')">Cancel</button>
-        <button class="btn btn-primary" id="rescheduleSubmit" onclick="submitReschedule()">✅ Save New Slot</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ─── UPLOAD REPORT MODAL ─── -->
 <div class="modal-overlay" id="reportModal">
   <div class="modal">
@@ -1575,21 +1516,6 @@ lines 1-6
 
 <script>
 // =========================================================
-// HOSPITAL BRAND CONFIGURATION
-// =========================================================
-// Change these values once per client install. Nothing else in this file
-// needs to be edited to rebrand the dashboard.
-const HOSPITAL_CONFIG = {
-  name: "MediCare Hospital",        // Shown in the staff card, e.g. "Admin • MediCare Hospital"
-  shortName: "MediCare AI",         // Login card + sidebar brand
-  adminName: "Dr. Muskan Gupta",    // Dashboard greeting. Used when the signed-in profile has no full_name.
-  city: "",
-  contactEmail: "",
-  whatsappNumber: "",               // Display only. The live number lives in the n8n CONFIG node.
-  googleReviewUrl: ""
-};
-
-// =========================================================
 // SUPABASE CONFIGURATION
 // =========================================================
 // Paste your Supabase Project URL and ANON/PUBLISHABLE key here.
@@ -1597,45 +1523,13 @@ const HOSPITAL_CONFIG = {
 const SUPABASE_URL = "https://qjuutemmnszsjkvobnpq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdXV0ZW1tbnN6c2prdm9ibnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTU2MjksImV4cCI6MjEwNjMzMTYyOX0.GW07465bBy6i7GInJtSF0Iy4WjCj-4xo2_zJ-qEbelM";
 
-// Every Supabase request is given a hard deadline. Without this a stalled
-// request leaves a page stuck on "Loading…" forever with no error shown.
-const REQUEST_TIMEOUT_MS = 20000;
-function fetchWithTimeout(input, init = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  return fetch(input, { ...init, signal: controller.signal })
-    .finally(() => clearTimeout(timer));
-}
-
 // ============================================
 // SUPABASE CLIENT
 // ============================================
 
-// Agar Supabase library load nahi hui (slow net / blocked CDN), to login screen error ke saath dikhao
-if (!window.supabase) {
-  var _ov = document.getElementById('staffAuthOverlay');
-  var _er = document.getElementById('staffAuthError');
-  if (_ov) _ov.classList.add('open');
-  if (_er) { _er.textContent = 'Supabase library load nahi hui. Internet check karke page refresh karein.'; _er.classList.add('show'); }
-  throw new Error('Supabase library failed to load');
-}
-
-// Session sirf memory mein rahegi (kahin save nahi hoti).
-// Isliye page jab bhi khulega ya refresh hoga, har baar email + password poochega.
-const _memoryStore = {};
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  { auth: {
-      storage: {
-        getItem: function (k) { return Object.prototype.hasOwnProperty.call(_memoryStore, k) ? _memoryStore[k] : null; },
-        setItem: function (k, v) { _memoryStore[k] = v; },
-        removeItem: function (k) { delete _memoryStore[k]; }
-      },
-      persistSession: true,
-      autoRefreshToken: true
-    },
-    global: { fetch: fetchWithTimeout } }
+  SUPABASE_ANON_KEY
 );
 
 // Make client available globally as well
@@ -1647,129 +1541,6 @@ console.log("Supabase client initialized successfully!");
 // ============================================
 // TEST SUPABASE CONNECTION
 // ============================================
-
-// ─── SETTINGS PERSISTENCE ───
-// Saves to the hospital_settings table when it exists (single row, id = 1),
-// and always mirrors to localStorage so the form still works before the SQL
-// migration that creates the table has been run.
-const SETTINGS_STORAGE_KEY = 'medicare_settings_v1';
-
-function settingsFromForm() {
-  const val = (id) => {
-    const el = document.getElementById(id);
-    return el ? String(el.value || '').trim() : '';
-  };
-  return {
-    hospital_name: val('setHospName'),
-    city: val('setHospCity'),
-    contact_email: val('setHospEmail'),
-    whatsapp_number: val('setHospPhone'),
-    ai_verify_token: val('setAiToken'),
-    ai_model: val('setAiModel'),
-    ai_reminder_window: val('setAiReminder'),
-    ai_max_retry: val('setAiRetry'),
-    ai_alert_email: val('setAiAlertEmail')
-  };
-}
-
-function loadLocalSettings() {
-  try { return JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}') || {}; }
-  catch (e) { return {}; }
-}
-
-function saveLocalSettings(data) {
-  try { localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data)); return true; }
-  catch (e) { return false; }
-}
-
-function fillSettingsForm(data) {
-  if (!data) return;
-  const put = (id, value) => {
-    const el = document.getElementById(id);
-    if (el && value != null && value !== '') el.value = value;
-  };
-  put('setHospName', data.hospital_name);
-  put('setHospCity', data.city);
-  put('setHospEmail', data.contact_email);
-  put('setHospPhone', data.whatsapp_number);
-  put('setAiToken', data.ai_verify_token);
-  put('setAiModel', data.ai_model);
-  put('setAiReminder', data.ai_reminder_window);
-  put('setAiRetry', data.ai_max_retry);
-  put('setAiAlertEmail', data.ai_alert_email);
-}
-
-async function loadSettings() {
-  // Show whatever we cached first, so the form is never blank while loading.
-  fillSettingsForm(loadLocalSettings());
-  if (!supabaseClient) return;
-  try {
-    const { data, error } = await supabaseClient
-      .from('hospital_settings')
-      .select('*')
-      .eq('id', 1)
-      .maybeSingle();
-    if (error) throw error;
-    if (data) fillSettingsForm(data);
-  } catch (error) {
-    // Table not created yet (or RLS blocked it) - localStorage remains the store.
-    console.warn('hospital_settings not readable yet:', error.message);
-  }
-}
-
-async function persistSettings(keys, buttonId, noteId, successMessage) {
-  if (!requireRole(['admin','manager'])) return;
-  const button = document.getElementById(buttonId);
-  const note = document.getElementById(noteId);
-  const all = settingsFromForm();
-  const subset = {};
-  keys.forEach(k => { subset[k] = all[k]; });
-
-  const previous = button ? button.textContent : '';
-  if (button) { button.disabled = true; button.textContent = 'Saving…'; }
-  if (note) note.textContent = '';
-
-  // Always cache locally so the value survives even without the table.
-  const merged = Object.assign(loadLocalSettings(), subset);
-  saveLocalSettings(merged);
-
-  let where = 'saved in this browser';
-  try {
-    // Upsert the single settings row. If the table does not exist yet the
-    // error is caught and we fall back to the local copy.
-    const payload = Object.assign({ id: 1 }, subset);
-    const { error } = await supabaseClient
-      .from('hospital_settings')
-      .upsert(payload, { onConflict: 'id' });
-    if (error) throw error;
-    where = 'saved to Supabase';
-    void logAuditEvent('settings_updated', 'hospital_settings', '1', { fields: Object.keys(subset) });
-  } catch (error) {
-    console.warn('Settings saved locally only:', error.message);
-    where = 'saved in this browser (run the hospital_settings SQL to store it in Supabase)';
-  } finally {
-    if (button) { button.disabled = false; button.textContent = previous || '💾 Save'; }
-    if (note) note.textContent = where;
-  }
-
-  // Reflect branding immediately after saving hospital details.
-  if (keys.includes('hospital_name')) applyBranding();
-  showToast(successMessage + ' — ' + where + '.', 'success');
-}
-
-function saveHospitalSettings() {
-  return persistSettings(
-    ['hospital_name', 'city', 'contact_email', 'whatsapp_number'],
-    'saveHospitalBtn', 'hospitalSaveNote', 'Hospital info saved'
-  );
-}
-
-function saveAiSettings() {
-  return persistSettings(
-    ['ai_verify_token', 'ai_model', 'ai_reminder_window', 'ai_max_retry', 'ai_alert_email'],
-    'saveAiBtn', 'aiSaveNote', 'AI configuration saved'
-  );
-}
 
 async function testSupabaseConnection() {
   try {
@@ -1909,7 +1680,7 @@ function navigate(page, el) {
   document.getElementById('page-title').textContent = titles[page] || page;
   currentPage = page;
   renderPage(page);
-  if (page === 'patients') logAuditEvent('patient_viewed', 'patients', null, {page:'Patient Directory'});
+  if (page === 'patients') logAuditEvent('patient_view', 'patients', null, {page:'Patient Directory'});
 }
 
 function renderPage(page) {
@@ -1928,30 +1699,12 @@ function renderPage(page) {
   else if (page === 'enquiries') renderEnquiries();
   else if (page === 'staffManagement') renderStaffManagement();
   else if (page === 'auditLogs') renderAuditLogs();
-  else if (page === 'settings') loadSettings();
 }
 
 // ─── DASHBOARD ───
 function renderDashboard() {
-  setGreeting();
   renderDashAppts();
   renderActivity();
-}
-
-// Fills the four dashboard stat cards from the appointments that fall on today.
-// Kept in sync with the "Today's Appointments" table so the numbers can never
-// contradict the list underneath them.
-function updateDashboardStats(todays) {
-  const set = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = String(value);
-  };
-  const list = todays || [];
-  const countStatus = (statuses) => list.filter(a => statuses.includes(String(a.status || 'booked').toLowerCase())).length;
-  set('statTodayTotal', list.length);
-  set('statTodayCompleted', countStatus(['completed']));
-  set('statTodayPending', countStatus(['booked', 'reschedule_pending', 'pending', 'confirmed']));
-  set('statTodayMissed', countStatus(['missed', 'cancelled', 'no_show', 'no-show']));
 }
 
 async function renderDashAppts() {
@@ -2047,34 +1800,7 @@ async function renderDashAppts() {
     });
 
     // 5. Render dashboard appointments
-    // "Today's Appointments" must actually mean TODAY. Filter by the local
-    // calendar day first, then take the first six of those.
-    const now = new Date();
-    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const localDayKey = (value) => {
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return null;
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    };
-
-    const todays = appointments
-      .filter(a => a.slot_time && localDayKey(a.slot_time) === todayKey)
-      .sort((a, b) => new Date(a.slot_time) - new Date(b.slot_time));
-
-    updateDashboardStats(todays);
-
-    if (!todays.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">
-            No appointments scheduled for today (${now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}).
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    const show = todays.slice(0, 6);
+    const show = appointments.slice(0, 6);
 
     tbody.innerHTML = show.map(a => {
 
@@ -2117,31 +1843,30 @@ async function renderDashAppts() {
       const status =
         a.status || 'booked';
 
-      // Escaped output + data attributes only: no patient text in handlers.
       return `
-        <tr data-dash-appt-id="${escapeCRMHtml(a.id)}" data-patient-id="${escapeCRMHtml(a.patient_id || '')}">
+        <tr>
 
           <td>
-            <strong>${escapeCRMHtml(patientName)}</strong>
+            <strong>${patientName}</strong>
             <br>
             <span style="font-size:11px;color:var(--text-muted)">
-              ${escapeCRMHtml(department)}
+              ${department}
             </span>
           </td>
 
           <td style="font-size:12px">
-            ${escapeCRMHtml(doctorName)}
+            ${doctorName}
           </td>
 
           <td>
             <strong>
-              ${escapeCRMHtml(dateText)} ${escapeCRMHtml(timeText)}
+              ${dateText} ${timeText}
             </strong>
           </td>
 
           <td>
             <span class="tag">
-              ${escapeCRMHtml(type)}
+              ${type}
             </span>
           </td>
 
@@ -2154,16 +1879,14 @@ async function renderDashAppts() {
             <button
               class="btn btn-ghost"
               style="font-size:11px;padding:4px 8px"
-              data-dash-action="wa"
-              title="Message on WhatsApp">
+              onclick="showToast('Sending a WhatsApp message to ${patientName}...','success')">
               💬
             </button>
 
             <button
               class="btn btn-ghost"
               style="font-size:11px;padding:4px 8px;margin-left:4px"
-              data-dash-action="view"
-              title="Open patient">
+              onclick="showToast('Opening ${patientName} details...','info')">
               👁
             </button>
 
@@ -2173,18 +1896,6 @@ async function renderDashAppts() {
       `;
 
     }).join('');
-
-    // Delegated handler for the dashboard row buttons.
-    tbody.onclick = (event) => {
-      const btn = event.target.closest && event.target.closest('[data-dash-action]');
-      if (!btn) return;
-      const row = btn.closest('tr[data-dash-appt-id]');
-      if (!row) return;
-      const action = btn.getAttribute('data-dash-action');
-      const patientId = row.getAttribute('data-patient-id');
-      if (action === 'view') { if (patientId) showPatientDetail(patientId); }
-      else showToast('WhatsApp messaging is not enabled in this demo build.', 'info');
-    };
 
   } catch (error) {
 
@@ -2323,58 +2034,40 @@ async function renderAppointments() {
     const type = a.reason || 'Consultation';
     const source = a.source || '—';
 
-    // All database / patient supplied text is escaped, and the row carries only
-    // the record id. Actions use a delegated listener, so a patient name can
-    // never break out of an attribute or be executed as script.
     return `
-      <tr data-appt-id="${escapeCRMHtml(a.id)}">
-        <td><span class="tag">${escapeCRMHtml(String(a.id).slice(0,8))}</span></td>
+      <tr>
+        <td><span class="tag">${String(a.id).slice(0,8)}</span></td>
         <td>
-          <strong>${escapeCRMHtml(patient)}</strong>
-          <div style="font-size:11px;color:var(--text-muted)">${escapeCRMHtml(phone)}</div>
+          <strong>${patient}</strong>
+          <div style="font-size:11px;color:var(--text-muted)">${phone}</div>
         </td>
-        <td style="font-size:13px">${escapeCRMHtml(doctor)}</td>
-        <td><span class="tag">${escapeCRMHtml(dept)}</span></td>
+        <td style="font-size:13px">${doctor}</td>
+        <td><span class="tag">${dept}</span></td>
         <td>
-          <strong>${escapeCRMHtml(timeText)}</strong>
-          <div style="font-size:11px;color:var(--text-muted)">${escapeCRMHtml(dateText)}</div>
+          <strong>${timeText}</strong>
+          <div style="font-size:11px;color:var(--text-muted)">${dateText}</div>
         </td>
-        <td>${escapeCRMHtml(type)}</td>
+        <td>${type}</td>
         <td>${statusBadge(a.status)}</td>
         <td>
           ${source === 'whatsapp'
             ? '<span class="badge blue">💬 WhatsApp</span>'
             : source !== '—'
-              ? `<span class="tag">${escapeCRMHtml(source)}</span>`
+              ? `<span class="tag">${source}</span>`
               : '<span style="font-size:11px;color:var(--text-muted)">—</span>'}
         </td>
         <td>
-          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" data-appt-action="reschedule"
-            title="Reschedule">🔄</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px" data-appt-action="cancel"
-            title="Cancel">❌</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px" data-appt-action="remind"
-            title="Send reminder">🔔</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px"
+            onclick="showToast('Opening reschedule dialog...','info')">🔄</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
+            onclick="cancelAppt('${a.id}','${patient}')">❌</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
+            onclick="showToast('Reminder sent to ${patient}!','success')">🔔</button>
         </td>
       </tr>
     `;
   }).join('');
 }
-
-// Delegated handler for the appointment action buttons (see renderAppointments).
-document.addEventListener('click', function (event) {
-  const btn = event.target.closest && event.target.closest('[data-appt-action]');
-  if (!btn) return;
-  const row = btn.closest('tr[data-appt-id]');
-  if (!row) return;
-  const id = row.getAttribute('data-appt-id');
-  const action = btn.getAttribute('data-appt-action');
-  const record = (window.__lastAppointmentRows || []).find(r => String(r.id) === String(id)) || {};
-  const name = record.patients?.name || 'this patient';
-  if (action === 'cancel') cancelAppt(id, name);
-  else if (action === 'reschedule') openReschedule(id, name, record.slot_time);
-  else if (action === 'remind') showToast(`Reminder queued for ${name}. WhatsApp delivery is not enabled in this demo build.`, 'info');
-});
 
 function filterApptTab(el, filter) {
   document.querySelectorAll('#page-appointments .tab').forEach(t => t.classList.remove('active'));
@@ -2383,85 +2076,45 @@ function filterApptTab(el, filter) {
   renderAppointments();
 }
 
-// ─── CANCEL APPOINTMENT (writes to the database) ───
 async function cancelAppt(id, name) {
-  if (!requireRole(['admin','manager','front desk'])) return;
-  if (!id) { showToast('That appointment has no id, so it could not be cancelled.', 'error'); return; }
-  if (!window.confirm(`Cancel ${name}'s appointment?\n\nThis updates the record in the database.`)) return;
+  if (!requireRole(['admin', 'manager', 'front desk'])) return;
+  if (!id || !window.supabaseClient) {
+    showToast('Cannot cancel this appointment: CRM connection is unavailable.', 'error');
+    return;
+  }
+
+  const confirmed = window.confirm(`Cancel ${name || 'this patient'}'s appointment? This will update the hospital record.`);
+  if (!confirmed) return;
+
   try {
-    const { error } = await supabaseClient
+    const { data: current, error: readError } = await supabaseClient
       .from('appointments')
-      .update({ status: 'cancelled' })
-      .eq('id', id);
-    if (error) throw error;
-    showToast(`${name}'s appointment was cancelled.`, 'success');
-    void logAuditEvent('appointment_cancelled', 'appointments', id, {});
-    if (typeof renderAppointments === 'function') renderAppointments();
-    if (typeof renderDashAppts === 'function') renderDashAppts();
+      .select('id, status')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (readError) throw new Error(`Could not verify appointment: ${readError.message}`);
+    if (!current) throw new Error('Appointment not found or you do not have permission to access it.');
+    if (['cancelled', 'completed', 'missed'].includes(String(current.status || '').toLowerCase())) {
+      showToast(`This appointment is already ${current.status}.`, 'info');
+      return;
+    }
+
+    const { data: updated, error: updateError } = await supabaseClient
+      .from('appointments')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('id, status')
+      .maybeSingle();
+
+    if (updateError) throw new Error(`Cancellation failed: ${updateError.message}`);
+    if (!updated) throw new Error('Cancellation was not confirmed by the database. Check permissions and refresh.');
+
+    showToast('Appointment cancelled and saved in the database. WhatsApp notification has not been sent.', 'success');
+    await Promise.all([renderDashAppts(), renderAppointments()]);
   } catch (error) {
     console.error('CANCEL APPOINTMENT ERROR:', error);
-    showToast('Could not cancel the appointment: ' + (error.message || 'unknown error'), 'error');
-  }
-}
-
-// ─── RESCHEDULE APPOINTMENT (writes to the database) ───
-let rescheduleTarget = null;
-
-function openReschedule(id, name, currentSlot) {
-  if (!requireRole(['admin','manager','doctor','front desk'])) return;
-  if (!id) { showToast('That appointment has no id, so it could not be rescheduled.', 'error'); return; }
-  rescheduleTarget = id;
-  const info = document.getElementById('rescheduleInfo');
-  const when = document.getElementById('rescheduleWhen');
-  const reason = document.getElementById('rescheduleReason');
-  if (info) {
-    const current = currentSlot
-      ? new Date(currentSlot).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
-      : 'unknown';
-    info.textContent = `Currently scheduled for ${current}. Choose a new slot for ${name}.`;
-  }
-  if (when) {
-    const base = currentSlot ? new Date(currentSlot) : new Date();
-    base.setMinutes(base.getMinutes() - base.getTimezoneOffset());
-    when.value = base.toISOString().slice(0, 16);
-  }
-  if (reason) reason.value = '';
-  const modal = document.getElementById('rescheduleModal');
-  if (modal) modal.classList.add('open');
-}
-
-async function submitReschedule() {
-  if (!rescheduleTarget) return;
-  const when = document.getElementById('rescheduleWhen');
-  const reason = document.getElementById('rescheduleReason');
-  const button = document.getElementById('rescheduleSubmit');
-  const value = when ? when.value : '';
-  if (!value) { showToast('Please choose the new date and time.', 'error'); return; }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) { showToast('That date/time could not be understood.', 'error'); return; }
-  const previous = button ? button.textContent : '';
-  if (button) { button.disabled = true; button.textContent = 'Saving…'; }
-  try {
-    const { error } = await supabaseClient
-      .from('appointments')
-      .update({ slot_time: parsed.toISOString(), status: 'reschedule_pending' })
-      .eq('id', rescheduleTarget);
-    if (error) throw error;
-    const target = rescheduleTarget;
-    rescheduleTarget = null;
-    closeModal('rescheduleModal');
-    showToast('Appointment rescheduled. The new slot was saved.', 'success');
-    void logAuditEvent('appointment_rescheduled', 'appointments', target, {
-      new_slot: parsed.toISOString(),
-      reason: reason && reason.value ? reason.value : null
-    });
-    if (typeof renderAppointments === 'function') renderAppointments();
-    if (typeof renderDashAppts === 'function') renderDashAppts();
-  } catch (error) {
-    console.error('RESCHEDULE ERROR:', error);
-    showToast('Could not reschedule: ' + (error.message || 'unknown error'), 'error');
-  } finally {
-    if (button) { button.disabled = false; button.textContent = previous || '✅ Save New Slot'; }
+    showToast(error?.message || 'Could not cancel appointment.', 'error');
   }
 }
 
@@ -2496,28 +2149,27 @@ async function renderPatients() {
 
     grid.innerHTML = patients.map(p => {
       const name = p.name || 'Unnamed Patient';
-      const initials = escapeCRMHtml(name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'PT');
+      const initials = name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'PT';
       const created = p.created_at
         ? new Date(p.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
         : '—';
-      // No patient text goes into an inline handler. The id is carried on the
-      // element and a delegated listener (below) opens the detail view, which
-      // re-fetches the record, so nothing user-supplied is ever parsed as code.
+      const safeName = name.replace(/'/g, "\\'");
+
       return `
-        <div class="patient-card" data-patient-id="${escapeCRMHtml(p.id)}">
+        <div class="patient-card" onclick="showPatientDetail('${safeName}')">
           <div class="patient-avatar" style="background:var(--accent-glow);color:var(--accent-light)">${initials}</div>
           <div style="flex:1">
-            <div class="patient-name">${escapeCRMHtml(name)}</div>
-            <div class="patient-meta">📞 ${escapeCRMHtml(p.phone || '—')}</div>
-            <div class="patient-meta">✉️ ${escapeCRMHtml(p.email || '—')}</div>
+            <div class="patient-name">${name}</div>
+            <div class="patient-meta">📞 ${p.phone || '—'}</div>
+            <div class="patient-meta">✉️ ${p.email || '—'}</div>
             <div class="patient-tags">
-              <span class="tag">Registered: ${escapeCRMHtml(created)}</span>
+              <span class="tag">Registered: ${created}</span>
               <span class="badge confirmed">✅ Active</span>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" data-action="wa">💬</button>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" data-action="view">👁</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('The WhatsApp messaging workflow for ${safeName} will be connected later.','info')">💬</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} profile will open.','info')">👁</button>
           </div>
         </div>
       `;
@@ -2527,118 +2179,15 @@ async function renderPatients() {
     grid.innerHTML = `
       <div class="card" style="grid-column:1/-1">
         <div class="card-body" style="color:var(--red)">
-          Failed to load patients: ${escapeCRMHtml(error?.message || 'Unknown error')}
+          Failed to load patients: ${error?.message || 'Unknown error'}
         </div>
       </div>
     `;
   }
 }
 
-// One delegated listener for the whole patient grid: works for cards rendered
-// later, and keeps patient text out of inline handlers entirely.
-document.addEventListener('click', function (event) {
-  const card = event.target.closest && event.target.closest('.patient-card');
-  if (!card) return;
-  const id = card.getAttribute('data-patient-id');
-  if (!id) return;
-  const actionBtn = event.target.closest && event.target.closest('[data-action]');
-  if (actionBtn) {
-    event.stopPropagation();
-    const action = actionBtn.getAttribute('data-action');
-    if (action === 'wa') {
-      showToast('WhatsApp messaging for this patient is not enabled in this demo build.', 'info');
-    } else {
-      showPatientDetail(id);
-    }
-    return;
-  }
-  showPatientDetail(id);
-});
-
-async function showPatientDetail(id) {
-  if (!id || !supabaseClient) return;
-  const modal = document.getElementById('patientDetailModal');
-  const title = document.getElementById('patientDetailTitle');
-  const body = document.getElementById('patientDetailBody');
-  if (!modal || !body) return;
-  title.textContent = '👤 Patient';
-  body.innerHTML = '<div style="color:var(--text-muted);padding:8px 0">Loading patient…</div>';
-  modal.classList.add('open');
-  try {
-    const { data: patient, error } = await supabaseClient
-      .from('patients')
-      .select('id, name, phone, email, created_at')
-      .eq('id', id)
-      .maybeSingle();
-    if (error) throw error;
-    if (!patient) {
-      body.innerHTML = '<div class="alert red"><span>⚠️</span><div>That patient could not be found.</div></div>';
-      return;
-    }
-    title.textContent = '👤 ' + (patient.name || 'Unnamed Patient');
-    const registered = patient.created_at
-      ? new Date(patient.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-      : '—';
-
-    // Recent appointments for this patient
-    const { data: appts } = await supabaseClient
-      .from('appointments')
-      .select('id, slot_time, status, reason')
-      .eq('patient_id', id)
-      .order('slot_time', { ascending: false })
-      .limit(5);
-
-    body.innerHTML = '';
-    const info = document.createElement('div');
-    info.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:18px';
-    [['📞 Phone', patient.phone], ['✉️ Email', patient.email], ['📅 Registered', registered]]
-      .forEach(([label, value]) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:10px;font-size:13px';
-        const l = document.createElement('span');
-        l.style.cssText = 'color:var(--text-muted);min-width:110px';
-        l.textContent = label;
-        const v = document.createElement('span');
-        v.style.cssText = 'font-weight:600;overflow-wrap:anywhere';
-        v.textContent = value || '—';
-        row.appendChild(l); row.appendChild(v);
-        info.appendChild(row);
-      });
-    body.appendChild(info);
-
-    const heading = document.createElement('div');
-    heading.className = 'section-title';
-    heading.textContent = 'Recent Appointments';
-    body.appendChild(heading);
-
-    if (!appts || !appts.length) {
-      const none = document.createElement('div');
-      none.style.cssText = 'font-size:12px;color:var(--text-muted)';
-      none.textContent = 'No appointments recorded for this patient.';
-      body.appendChild(none);
-    } else {
-      appts.forEach(a => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)';
-        const when = document.createElement('span');
-        when.style.cssText = 'font-size:12px;flex:1';
-        when.textContent = a.slot_time
-          ? new Date(a.slot_time).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
-          : '—';
-        const status = document.createElement('span');
-        status.innerHTML = statusBadge(a.status || 'booked');
-        row.appendChild(when); row.appendChild(status);
-        body.appendChild(row);
-      });
-    }
-  } catch (error) {
-    console.error('PATIENT DETAIL ERROR:', error);
-    body.innerHTML = '';
-    const err = document.createElement('div');
-    err.className = 'alert red';
-    err.textContent = 'Could not load patient: ' + (error.message || 'unknown error');
-    body.appendChild(err);
-  }
+function showPatientDetail(name) {
+  showToast(`Opening ${name}'s full profile...`, 'info');
 }
 
 // ─── WHATSAPP ───
@@ -2798,7 +2347,7 @@ async function renderReports() {
 
 async function openReportFile(storagePath, fileName, patientId) {
   if (!requireRole(['admin','manager','doctor'])) return;
-  await logAuditEvent('report_opened', 'reports', null, {file_name:fileName || null, patient_id:patientId || null});
+  await logAuditEvent('report_open', 'reports', null, {file_name:fileName || null, patient_id:patientId || null});
   if (!storagePath) {
     showToast('No file is attached to this report.', 'error');
     return;
@@ -3120,15 +2669,7 @@ function showToast(msg, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  // Build with textContent, never innerHTML: toast messages can include patient-supplied
-  // text (e.g. names coming from WhatsApp), which must never be parsed as HTML.
-  const iconEl = document.createElement('span');
-  iconEl.textContent = icons[type] || 'ℹ️';
-  const textEl = document.createElement('span');
-  textEl.textContent = String(msg == null ? '' : msg);
-  toast.appendChild(iconEl);
-  toast.appendChild(textEl);
-  if (!container) return;
+  toast.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
   container.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100px)'; toast.style.transition = '0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
@@ -3457,7 +2998,7 @@ async function openUploadReport() {
 
     patientSelect.innerHTML = `
       <option value="">Select patient</option>
-      ${patients.map(p => `<option value="${escapeCRMHtml(p.id)}">${escapeCRMHtml(p.name || 'Unnamed')} — ${escapeCRMHtml(p.phone || 'No phone')}</option>`).join('')}
+      ${patients.map(p => `<option value="${p.id}">${p.name || 'Unnamed'} — ${p.phone || 'No phone'}</option>`).join('')}
     `;
   } catch (error) {
     console.error('REPORT PATIENT LOAD ERROR:', error);
@@ -3880,89 +3421,9 @@ document.addEventListener('click', function(event) {
   }
 });
 
-// ─── GLOBAL PATIENT SEARCH ───
-// Really searches the patients table (name, phone, email) using PostgREST's
-// ilike filters, and shows a clickable result list. Results are built with DOM
-// nodes (textContent) so patient-supplied text can never be parsed as HTML.
-let globalSearchTimer = null;
-let globalSearchSeq = 0;
-
 function handleSearch(val) {
-  const box = document.getElementById('globalSearchResults');
-  if (!box) return;
-  const query = String(val || '').trim();
-  clearTimeout(globalSearchTimer);
-  if (query.length < 2) { closeGlobalSearch(); return; }
-  globalSearchTimer = setTimeout(() => runGlobalSearch(query), 220);
+  if (val.length > 2) showToast(`Searching for "${val}"...`, 'info');
 }
-
-function closeGlobalSearch() {
-  const box = document.getElementById('globalSearchResults');
-  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
-}
-
-async function runGlobalSearch(query) {
-  const box = document.getElementById('globalSearchResults');
-  if (!box) return;
-  if (!supabaseClient) { closeGlobalSearch(); return; }
-  const seq = ++globalSearchSeq;
-  // Strip characters that would break the PostgREST or-filter syntax.
-  const safe = query.replace(/[,()%*\\]/g, ' ').trim();
-  if (!safe) { closeGlobalSearch(); return; }
-  box.style.display = 'block';
-  box.innerHTML = '<div class="search-empty">Searching…</div>';
-  try {
-    const { data, error } = await supabaseClient
-      .from('patients')
-      .select('id, name, phone, email')
-      .or(`name.ilike.%${safe}%,phone.ilike.%${safe}%,email.ilike.%${safe}%`)
-      .limit(8);
-    if (seq !== globalSearchSeq) return; // a newer keystroke won
-    if (error) throw error;
-    if (!data || !data.length) {
-      box.innerHTML = '';
-      const empty = document.createElement('div');
-      empty.className = 'search-empty';
-      empty.textContent = `No patients match “${query}”.`;
-      box.appendChild(empty);
-      return;
-    }
-    box.innerHTML = '';
-    data.forEach(p => {
-      const item = document.createElement('div');
-      item.className = 'search-item';
-      const name = document.createElement('div');
-      name.className = 'search-item-name';
-      name.textContent = p.name || 'Unnamed Patient';
-      const meta = document.createElement('div');
-      meta.className = 'search-item-meta';
-      meta.textContent = [p.phone, p.email].filter(Boolean).join(' · ') || 'No contact details';
-      item.appendChild(name);
-      item.appendChild(meta);
-      item.addEventListener('click', () => {
-        closeGlobalSearch();
-        const input = document.getElementById('globalSearch');
-        if (input) input.value = '';
-        showPatientDetail(p.id);
-      });
-      box.appendChild(item);
-    });
-  } catch (error) {
-    if (seq !== globalSearchSeq) return;
-    console.error('GLOBAL SEARCH ERROR:', error);
-    box.innerHTML = '';
-    const err = document.createElement('div');
-    err.className = 'search-empty';
-    err.textContent = 'Search failed: ' + (error.message || 'unknown error');
-    box.appendChild(err);
-  }
-}
-
-// Close the results when clicking anywhere else.
-document.addEventListener('click', function (event) {
-  const box = document.querySelector('.search-box');
-  if (box && !box.contains(event.target)) closeGlobalSearch();
-});
 
 function filterApptTab(el, filter) {
   document.querySelectorAll('#page-appointments .tab').forEach(t => t.classList.remove('active'));
@@ -3978,68 +3439,12 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 // ─── SET DATE ───
 const d = new Date();
-document.getElementById('topbar-date').textContent = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-
-// ─── MOBILE SIDEBAR ───
-// Opens/closes the navigation drawer on small screens. Call toggleSidebar(false) to force-close.
-function toggleSidebar(force) {
-  const sidebar = document.querySelector('.sidebar');
-  const backdrop = document.getElementById('sidebarBackdrop');
-  if (!sidebar) return;
-  const shouldOpen = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
-  sidebar.classList.toggle('open', shouldOpen);
-  if (backdrop) backdrop.classList.toggle('show', shouldOpen);
-  document.body.style.overflow = shouldOpen ? 'hidden' : '';
-}
-// Close the drawer after picking a page, and when the viewport grows back to desktop.
-document.addEventListener('click', event => {
-  const item = event.target.closest && event.target.closest('.nav-item');
-  if (item && window.matchMedia('(max-width: 900px)').matches) toggleSidebar(false);
-});
-window.addEventListener('resize', () => { if (window.innerWidth > 900) toggleSidebar(false); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape') toggleSidebar(false); });
-
-// ─── BRANDING ───
-// Applies HOSPITAL_CONFIG so a new client install is a one-line change.
-function applyBranding() {
-  const cfg = HOSPITAL_CONFIG || {};
-  // Saved hospital info (from the Settings page) wins over the built-in defaults.
-  const saved = loadLocalSettings();
-  const name = saved.hospital_name || cfg.name || '';
-  const brand = cfg.shortName || name || 'Hospital CRM';
-  const setText = (id, value) => { const el = document.getElementById(id); if (el && value) el.textContent = value; };
-  setText('sidebarBrandName', brand);
-  setText('staffAuthTitle', brand);
-  if (brand) document.title = brand + ' — Hospital CRM Dashboard';
-}
-
-// ─── DASHBOARD GREETING ───
-// Time-aware greeting + the staff member's real name, instead of a hardcoded doctor.
-function setGreeting() {
-  const greetingEl = document.getElementById('dashGreeting');
-  const subEl = document.getElementById('dashSubtitle');
-  const now = new Date();
-  const hours = now.getHours();
-  const part = hours < 12 ? 'Good Morning' : hours < 17 ? 'Good Afternoon' : 'Good Evening';
-  const profile = (typeof staffProfile !== 'undefined' && staffProfile) ? staffProfile : null;
-  // Name shown in the greeting, in priority order:
-  //   1. the signed-in staff member's real full_name
-  //   2. HOSPITAL_CONFIG.adminName (the configured default, e.g. "Dr. Muskan Gupta")
-  //   3. the email's local part ("drmehta@x.com" -> "Drmehta")
-  const rawName = profile && (profile.full_name || profile.name || profile.display_name);
-  const emailName = profile && profile.email ? String(profile.email).split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()) : '';
-  const configName = (typeof HOSPITAL_CONFIG !== 'undefined' && HOSPITAL_CONFIG) ? HOSPITAL_CONFIG.adminName : '';
-  const name = rawName || configName || emailName;
-  const roleLabel = profile && typeof ROLE_LABELS !== 'undefined' ? (ROLE_LABELS[normalizedStaffRole(profile.role)] || '') : '';
-  if (greetingEl) greetingEl.textContent = name ? (part + ', ' + name + ' 👋') : (part + ' 👋');
-  if (subEl) {
-    const dateText = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-    subEl.textContent = "Today's overview — " + dateText + (roleLabel ? ' • ' + roleLabel + ' view' : '');
-  }
-}
-
-// Apply branding as soon as the page loads so the login card is already rebranded.
-applyBranding();
+const todayLabel = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+document.getElementById('topbar-date').textContent = todayLabel;
+const dashboardDateLabel = document.getElementById('dashboardDateLabel');
+if (dashboardDateLabel) dashboardDateLabel.textContent = "Today's overview — " + todayLabel;
+const appointmentsDateLabel = document.getElementById('appointmentsDateLabel');
+if (appointmentsDateLabel) appointmentsDateLabel.textContent = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
 
 // ─── AUTHENTICATED STAFF / ROLE AUTHORIZATION ───
 // UI permissions improve usability; Supabase RLS remains the actual database security boundary.
@@ -4095,7 +3500,13 @@ function applyStaffPermissions() {
   const roleEl = document.getElementById('staffDisplayRole');
   const avatarEl = document.getElementById('staffAvatar');
   if (nameEl) nameEl.textContent = displayName;
-  if (roleEl) roleEl.textContent = roleLabel + ' • ' + (HOSPITAL_CONFIG.name || 'Hospital');
+  if (roleEl) roleEl.textContent = roleLabel + ' • MediCare Hospital';
+  const greetingEl = document.getElementById('dashboardGreeting');
+  if (greetingEl) {
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    greetingEl.textContent = greeting + ', ' + displayName + ' 👋';
+  }
   if (avatarEl) avatarEl.textContent = displayName.split(/\s+/).filter(Boolean).slice(0,2).map(part => part[0]).join('').toUpperCase() || 'ST';
 }
 function showStaffLogin(message) {
@@ -4117,9 +3528,9 @@ async function logAuditEvent(action, entityType, entityId, metadata) {
     // Uses the existing SQL function. Parameter names must match the deployed log_event() signature.
     const { error } = await supabaseClient.rpc('log_event', {
       p_action: payload.action,
-      p_entity: payload.entity_type,
+      p_entity_type: payload.entity_type,
       p_entity_id: payload.entity_id,
-      p_details: JSON.stringify(payload.metadata).slice(0, 2000)
+      p_metadata: payload.metadata
     });
     if (error) { console.warn('Audit event could not be recorded by log_event():', error.message); return false; }
     return true;
@@ -4153,7 +3564,6 @@ async function loadStaffProfileForSession(session) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const page = document.getElementById('page-' + currentPage);
     if (page) page.classList.add('active');
-    applyBranding();
     renderPage(currentPage);
     loadNotifications();
   } catch (error) {
@@ -4207,12 +3617,9 @@ async function staffSignOut() {
 }
 
 async function renderAuditLogs() {
+  if (!requireRole(['admin','manager'])) return;
   const tbody = document.getElementById('auditLogsTable');
   if (!tbody) return;
-  if (!requireRole(['admin','manager'])) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">You do not have permission to view audit logs.</td></tr>';
-    return;
-  }
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading audit events…</td></tr>';
   try {
     const { data, error } = await supabaseClient.from('audit_log').select('*').order('created_at', {ascending:false}).limit(500);
@@ -4220,26 +3627,21 @@ async function renderAuditLogs() {
     if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No audit events found.</td></tr>'; return; }
     tbody.innerHTML = data.map(row => {
       const time = row.created_at || row.timestamp || row.event_time;
-      const actorEmail = row.actor_email || row.staff_name || row.user_email || row.user_id || row.staff_id || 'Staff';
-      const actorRole = row.actor_role || '';
-      const actor = actorRole ? String(actorEmail) + ' (' + actorRole + ')' : actorEmail;
-      const action = row.action || row.event_type || row.event || '-';
-      const entity = [row.entity || row.entity_type || row.table_name || row.record_type, row.entity_id || row.record_id].filter(Boolean).join(' / ') || '-';
-      const detail = row.details || row.metadata || row.payload || row.description || '';
+      const actor = row.staff_name || row.user_email || row.actor_email || row.user_id || row.staff_id || 'Staff';
+      const action = row.action || row.event_type || row.event || '—';
+      const entity = [row.entity_type || row.table_name || row.record_type, row.entity_id || row.record_id].filter(Boolean).join(' / ') || '—';
+      const detail = row.metadata || row.details || row.payload || row.description || '';
       return '<tr><td>' + escapeCRMHtml(formatCRMDate(time)) + '</td><td>' + escapeCRMHtml(actor) + '</td><td><span class="badge blue">' + escapeCRMHtml(action) + '</span></td><td>' + escapeCRMHtml(entity) + '</td><td><div class="enquiry-message">' + escapeCRMHtml(typeof detail === 'object' ? JSON.stringify(detail) : detail || '—') + '</div></td></tr>';
     }).join('');
   } catch (error) {
     console.error('AUDIT LOG LOAD ERROR:', error);
-    tbody.innerHTML = errorRow(5, 'Could not load audit logs: ' + (error.message || 'Unknown error'), 'renderAuditLogs');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#fca5a5">Could not load audit logs: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
   }
 }
 async function renderStaffManagement() {
+  if (!requireRole(['admin'])) return;
   const tbody = document.getElementById('staffManagementTable');
   if (!tbody) return;
-  if (!requireRole(['admin'])) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">You do not have permission to manage staff.</td></tr>';
-    return;
-  }
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading staff profiles…</td></tr>';
   try {
     const { data, error } = await supabaseClient.from('staff_profiles').select('*').order('created_at', {ascending:false}).limit(500);
@@ -4256,7 +3658,7 @@ async function renderStaffManagement() {
     }).join('');
   } catch (error) {
     console.error('STAFF MANAGEMENT LOAD ERROR:', error);
-    tbody.innerHTML = errorRow(5, 'Could not load staff profiles: ' + (error.message || 'Unknown error'), 'renderStaffManagement');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#fca5a5">Could not load staff profiles: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
   }
 }
 async function saveStaffProfile(id) {
@@ -4339,7 +3741,7 @@ async function renderEscalations() {
     }).join('');
   } catch (error) {
     console.error('ESCALATIONS LOAD ERROR:', error);
-    tbody.innerHTML = errorRow(6, 'Could not load escalations: ' + (error.message || 'Unknown error'), 'renderEscalations');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#fca5a5">Could not load escalations: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
     showToast('Escalations could not load. Check the escalations table and authenticated RLS policy.', 'error');
   }
 }
@@ -4397,7 +3799,7 @@ async function renderEnquiries() {
     }).join('');
   } catch (error) {
     console.error('ENQUIRIES LOAD ERROR:', error);
-    tbody.innerHTML = errorRow(6, 'Could not load enquiries: ' + (error.message || 'Unknown error'), 'renderEnquiries');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:#fca5a5">Could not load enquiries: ' + escapeCRMHtml(error.message || 'Unknown error') + '</td></tr>';
     showToast('Enquiries could not load. Check the enquiries table and authenticated RLS policy.', 'error');
   }
 }
@@ -4425,11 +3827,6 @@ async function updateEnquiryStatus(button) {
 
 function escapeCRMHtml(value) {
   return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-}
-// Renders a failed table load with an inline Retry button, so a page never becomes a dead end.
-function errorRow(colspan, message, retryFn) {
-  const retry = retryFn ? '<div style="margin-top:12px"><button class="btn btn-ghost" style="font-size:12px" onclick="' + retryFn + '()">⟳ Retry</button></div>' : '';
-  return '<tr><td colspan="' + colspan + '" style="text-align:center;padding:24px;color:#fca5a5">' + escapeCRMHtml(message) + retry + '</td></tr>';
 }
 function formatCRMDate(value) {
   if (!value) return '—';
@@ -4706,7 +4103,7 @@ function exportAppointmentsCSV() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  void logAuditEvent('csv_exported', 'appointments', null, {row_count:rows.length, file_name:link.download});
+  void logAuditEvent('csv_export', 'appointments', null, {row_count:rows.length, file_name:link.download});
   showToast('CSV downloaded successfully', 'success');
 }
 </script>
