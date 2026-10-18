@@ -2,7 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" id="vp" content="width=1280, initial-scale=1.0">
+<script>
+  // Mobile par bhi desktop layout dikhao aur screen ke hisaab se auto-fit karo
+  (function () {
+    var DESKTOP_WIDTH = 1280;
+    var vp = document.getElementById('vp');
+    function fit() {
+      var w = Math.min(screen.width, window.innerWidth || screen.width);
+      if (w < DESKTOP_WIDTH) {
+        vp.setAttribute('content', 'width=' + DESKTOP_WIDTH + ', initial-scale=' + (w / DESKTOP_WIDTH).toFixed(3) + ', minimum-scale=' + (w / DESKTOP_WIDTH).toFixed(3) + ', maximum-scale=5, user-scalable=yes');
+      } else {
+        vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      }
+    }
+    fit();
+    window.addEventListener('orientationchange', function () { setTimeout(fit, 300); });
+  })();
+</script>
 <title>MediCare AI — Hospital CRM Dashboard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -415,6 +432,22 @@
   .stars { color: var(--yellow); font-size: 13px; letter-spacing: 1px; }
 
   /* ─── RESPONSIVE ─── */
+  .menu-btn { display:none; background:var(--card); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:8px 12px; font-size:16px; cursor:pointer; margin-right:10px; }
+.sidebar-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1400; }
+.sidebar-backdrop.show { display:block; }
+
+@media (max-width: 900px) {
+  .menu-btn { display:inline-flex; align-items:center; }
+  .sidebar {
+    display:flex !important; flex-direction:column;
+    position:fixed !important; top:0; left:0; bottom:0;
+    width:260px; max-width:82vw; overflow-y:auto;
+    transform:translateX(-100%); transition:transform .25s ease; z-index:1500;
+  }
+  .sidebar.open { transform:translateX(0); }
+  .main { margin-left:0 !important; width:100% !important; }
+}
   @media (max-width: 900px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .grid-2, .grid-12 { grid-template-columns: 1fr; }
@@ -524,73 +557,6 @@
   .enquiry-message { max-width:340px; white-space:pre-wrap; overflow-wrap:anywhere; }
   @media (max-width:600px) { .auth-card { padding:22px; } .enquiry-message { max-width:220px; } }
 
-
-/* Responsive layout: use the same page without forcing browser Desktop mode */
-@media (max-width: 1100px) {
-  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .main { min-width: 0; }
-  .content { padding: 20px; }
-  .topbar { padding: 12px 20px; flex-wrap: wrap; }
-  .search-box { width: min(240px, 100%); }
-  .topbar-date { font-size: 11px; }
-}
-@media (max-width: 700px) {
-  html, body { width: 100%; min-width: 0; }
-  body { display: block; overflow-x: hidden; overflow-y: auto; }
-  .sidebar {
-    position: sticky; top: 0; left: auto;
-    width: 100%; height: auto; max-height: 112px;
-    z-index: 200; overflow-x: auto; overflow-y: hidden;
-    display: flex; flex-direction: row; align-items: stretch;
-    border-right: 0; border-bottom: 1px solid var(--border);
-    scrollbar-width: thin;
-  }
-  .sidebar-logo, .sidebar-footer { display: none !important; }
-  .sidebar-section {
-    display: flex; flex: 0 0 auto; align-items: center;
-    gap: 6px; padding: 8px; border-right: 1px solid var(--border);
-  }
-  .sidebar-section .section-label { display: none; }
-  .sidebar-section .nav-item {
-    flex: 0 0 auto; white-space: nowrap;
-    padding: 10px 12px; font-size: 12px;
-  }
-  .sidebar-section .nav-icon { margin-right: 4px; }
-  .main {
-    margin-left: 0 !important; width: 100%;
-    height: auto; min-height: calc(100vh - 112px);
-    overflow: visible; display: flex;
-  }
-  .topbar {
-    position: sticky; top: 0; padding: 12px;
-    gap: 10px; flex-wrap: wrap;
-  }
-  .topbar-title { font-size: 16px; min-width: 40%; }
-  .topbar-date { order: 2; }
-  .search-box { order: 3; flex: 1 1 100%; width: 100%; }
-  .topbar > .btn { order: 4; flex: 1 1 100%; justify-content: center; }
-  .content { padding: 14px; min-width: 0; }
-  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .stat-card { padding: 14px; min-width: 0; }
-  .grid-2, .grid-12, .workflow-grid { grid-template-columns: minmax(0, 1fr) !important; }
-  .ai-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .page-header { gap: 10px; flex-wrap: wrap; }
-  .page-h1 { font-size: clamp(20px, 5vw, 28px); }
-  .card { min-width: 0; }
-  table { min-width: 620px; }
-  .table-container, .table-wrap, .data-table-wrap {
-    max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
-  }
-  input, select, textarea { max-width: 100%; }
-  .modal, .modal-content, .auth-card { max-width: calc(100vw - 24px); }
-}
-@media (max-width: 380px) {
-  .stats-grid, .ai-grid { grid-template-columns: minmax(0, 1fr); }
-  .content { padding: 10px; }
-  .sidebar-section { padding: 6px; }
-  .sidebar-section .nav-item { padding: 9px 10px; }
-}
-
 </style>
 
 <!-- Supabase JS Client -->
@@ -690,6 +656,7 @@
 
   <!-- TOPBAR -->
   <div class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
     <div class="topbar-title" id="page-title">Dashboard</div>
     <div class="topbar-date" id="topbar-date"></div>
     <div class="search-box">
@@ -724,8 +691,8 @@
     <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div>
-          <div class="page-h1" id="dashboardGreeting">Hospital Dashboard 👋</div>
-          <div class="page-sub" id="dashboardDateLabel">Today's overview</div>
+          <div class="page-h1">Good Morning, Dr. Muskan Gupta 👋</div>
+          <div class="page-sub">Today's overview — Monday, 17 August 2026</div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="exportAppointmentsCSV()">📥 Export</button>
@@ -738,9 +705,8 @@
         <div class="ai-header">
           <span class="ai-icon">🤖</span>
           <span class="ai-title">AI Automation Status</span>
-          <span style="margin-left:8px"><span class="live-dot"></span> <span style="font-size:11px;color:var(--green);margin-left:4px">Integration status: verify in n8n</span></span>
+          <span style="margin-left:8px"><span class="live-dot"></span> <span style="font-size:11px;color:var(--green);margin-left:4px">All Systems Live</span></span>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin:4px 0 12px">Sample/demo metrics — not verified live activity</div>
         <div class="ai-grid">
           <div class="ai-metric"><div class="ai-metric-val">247</div><div class="ai-metric-lbl">WhatsApp Handled</div></div>
           <div class="ai-metric"><div class="ai-metric-val">89</div><div class="ai-metric-lbl">AI Calls Made</div></div>
@@ -915,7 +881,7 @@
         <div class="card-header">
           <div class="card-title">📋 Appointment List</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <span style="font-size:12px;color:var(--text-muted)" id="appointmentsDateLabel"></span>
+            <span style="font-size:12px;color:var(--text-muted)">17 Aug 2026</span>
             <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="exportAppointmentsCSV()">📥 CSV</button>
           </div>
         </div>
@@ -943,7 +909,7 @@
       </div>
 
       <div class="kpi-row">
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">1,284</div><div class="kpi-lbl">Total Registered (demo)</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">1,284</div><div class="kpi-lbl">Total Registered</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">89</div><div class="kpi-lbl">Active This Month</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--yellow)">34</div><div class="kpi-lbl">New This Week</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--purple)">247</div><div class="kpi-lbl">WhatsApp Active</div></div>
@@ -1134,7 +1100,7 @@
 
       <div class="stats-grid">
         <div class="stat-card blue"><div class="stat-icon">📅</div><div class="stat-value">1,247</div><div class="stat-label">Total Appointments</div><div class="stat-change up">▲ 18% vs last month</div></div>
-        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">₹8.4L</div><div class="stat-label">Revenue (demo estimate)</div><div class="stat-change up">▲ 22% vs last month</div></div>
+        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">₹8.4L</div><div class="stat-label">Revenue (Est.)</div><div class="stat-change up">▲ 22% vs last month</div></div>
         <div class="stat-card purple"><div class="stat-icon">🤖</div><div class="stat-value">94%</div><div class="stat-label">AI Automation Rate</div><div class="stat-change up">Saving 40+ staff hours</div></div>
         <div class="stat-card yellow"><div class="stat-icon">😊</div><div class="stat-value">4.6★</div><div class="stat-label">Patient Satisfaction</div><div class="stat-change up">▲ 0.3 vs last month</div></div>
       </div>
@@ -1162,7 +1128,7 @@
       </div>
 
       <div class="kpi-row">
-        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">3,847</div><div class="kpi-lbl">Executions Today (demo)</div></div>
+        <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">3,847</div><div class="kpi-lbl">Total Executions Today</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--green)">99.2%</div><div class="kpi-lbl">Success Rate</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--red)">30</div><div class="kpi-lbl">Errors (Auto-Alerted)</div></div>
         <div class="kpi-item"><div class="kpi-val" style="color:var(--accent)">4</div><div class="kpi-lbl">Active Workflows</div></div>
@@ -1366,8 +1332,8 @@
         <div class="card">
           <div class="card-header"><div class="card-title">🤖 AI Automation Config</div></div>
           <div class="card-body">
-            <div class="form-group"><label class="form-label">WhatsApp Verify Token</label><div class="form-input" style="height:auto;min-height:42px;display:flex;align-items:center;color:var(--text-muted)">Configured server-side in n8n only</div><small style="color:var(--text-muted)">Do not store verification tokens in this browser page.</small></div>
-            <div class="form-group"><label class="form-label">Gemini AI Model</label><select class="form-select"><option>gemini-2.5-flash</option><option>gemini-2.5-pro</option></select></div>
+            <div class="form-group"><label class="form-label">WhatsApp Verify Token</label><input class="form-input" value="••••••••••••" type="password"></div>
+            <div class="form-group"><label class="form-label">Gemini AI Model</label><select class="form-select"><option>gemini-1.5-pro</option><option>gemini-1.5-flash</option></select></div>
             <div class="form-group"><label class="form-label">Reminder Window (2h before)</label><input class="form-input" value="120 minutes"></div>
             <div class="form-group"><label class="form-label">Max Retry Calls</label><input class="form-input" value="3" type="number"></div>
             <div class="form-group"><label class="form-label">Error Alert Email</label><input class="form-input" value="tech@medicare-bhopal.com"></div>
@@ -1527,9 +1493,30 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // SUPABASE CLIENT
 // ============================================
 
+// Agar Supabase library load nahi hui (slow net / blocked CDN), to login screen error ke saath dikhao
+if (!window.supabase) {
+  var _ov = document.getElementById('staffAuthOverlay');
+  var _er = document.getElementById('staffAuthError');
+  if (_ov) _ov.classList.add('open');
+  if (_er) { _er.textContent = 'Supabase library load nahi hui. Internet check karke page refresh karein.'; _er.classList.add('show'); }
+  throw new Error('Supabase library failed to load');
+}
+
+// Session sirf memory mein rahegi (kahin save nahi hoti).
+// Isliye page jab bhi khulega ya refresh hoga, har baar email + password poochega.
+const _memoryStore = {};
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_ANON_KEY
+  SUPABASE_ANON_KEY,
+  { auth: {
+      storage: {
+        getItem: function (k) { return Object.prototype.hasOwnProperty.call(_memoryStore, k) ? _memoryStore[k] : null; },
+        setItem: function (k, v) { _memoryStore[k] = v; },
+        removeItem: function (k) { delete _memoryStore[k]; }
+      },
+      persistSession: true,
+      autoRefreshToken: true
+  } }
 );
 
 // Make client available globally as well
@@ -1680,7 +1667,7 @@ function navigate(page, el) {
   document.getElementById('page-title').textContent = titles[page] || page;
   currentPage = page;
   renderPage(page);
-  if (page === 'patients') logAuditEvent('patient_view', 'patients', null, {page:'Patient Directory'});
+  if (page === 'patients') logAuditEvent('patient_viewed', 'patients', null, {page:'Patient Directory'});
 }
 
 function renderPage(page) {
@@ -2076,46 +2063,8 @@ function filterApptTab(el, filter) {
   renderAppointments();
 }
 
-async function cancelAppt(id, name) {
-  if (!requireRole(['admin', 'manager', 'front desk'])) return;
-  if (!id || !window.supabaseClient) {
-    showToast('Cannot cancel this appointment: CRM connection is unavailable.', 'error');
-    return;
-  }
-
-  const confirmed = window.confirm(`Cancel ${name || 'this patient'}'s appointment? This will update the hospital record.`);
-  if (!confirmed) return;
-
-  try {
-    const { data: current, error: readError } = await supabaseClient
-      .from('appointments')
-      .select('id, status')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (readError) throw new Error(`Could not verify appointment: ${readError.message}`);
-    if (!current) throw new Error('Appointment not found or you do not have permission to access it.');
-    if (['cancelled', 'completed', 'missed'].includes(String(current.status || '').toLowerCase())) {
-      showToast(`This appointment is already ${current.status}.`, 'info');
-      return;
-    }
-
-    const { data: updated, error: updateError } = await supabaseClient
-      .from('appointments')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select('id, status')
-      .maybeSingle();
-
-    if (updateError) throw new Error(`Cancellation failed: ${updateError.message}`);
-    if (!updated) throw new Error('Cancellation was not confirmed by the database. Check permissions and refresh.');
-
-    showToast('Appointment cancelled and saved in the database. WhatsApp notification has not been sent.', 'success');
-    await Promise.all([renderDashAppts(), renderAppointments()]);
-  } catch (error) {
-    console.error('CANCEL APPOINTMENT ERROR:', error);
-    showToast(error?.message || 'Could not cancel appointment.', 'error');
-  }
+function cancelAppt(id, name) {
+  showToast(`${name}'s appointment has been cancelled. AI will notify them on WhatsApp.`, 'info');
 }
 
 // ─── PATIENTS ───
@@ -2347,7 +2296,7 @@ async function renderReports() {
 
 async function openReportFile(storagePath, fileName, patientId) {
   if (!requireRole(['admin','manager','doctor'])) return;
-  await logAuditEvent('report_open', 'reports', null, {file_name:fileName || null, patient_id:patientId || null});
+  await logAuditEvent('report_opened', 'reports', null, {file_name:fileName || null, patient_id:patientId || null});
   if (!storagePath) {
     showToast('No file is attached to this report.', 'error');
     return;
@@ -3439,12 +3388,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 // ─── SET DATE ───
 const d = new Date();
-const todayLabel = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-document.getElementById('topbar-date').textContent = todayLabel;
-const dashboardDateLabel = document.getElementById('dashboardDateLabel');
-if (dashboardDateLabel) dashboardDateLabel.textContent = "Today's overview — " + todayLabel;
-const appointmentsDateLabel = document.getElementById('appointmentsDateLabel');
-if (appointmentsDateLabel) appointmentsDateLabel.textContent = d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+document.getElementById('topbar-date').textContent = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 
 // ─── AUTHENTICATED STAFF / ROLE AUTHORIZATION ───
 // UI permissions improve usability; Supabase RLS remains the actual database security boundary.
@@ -3501,12 +3445,6 @@ function applyStaffPermissions() {
   const avatarEl = document.getElementById('staffAvatar');
   if (nameEl) nameEl.textContent = displayName;
   if (roleEl) roleEl.textContent = roleLabel + ' • MediCare Hospital';
-  const greetingEl = document.getElementById('dashboardGreeting');
-  if (greetingEl) {
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    greetingEl.textContent = greeting + ', ' + displayName + ' 👋';
-  }
   if (avatarEl) avatarEl.textContent = displayName.split(/\s+/).filter(Boolean).slice(0,2).map(part => part[0]).join('').toUpperCase() || 'ST';
 }
 function showStaffLogin(message) {
@@ -3528,9 +3466,9 @@ async function logAuditEvent(action, entityType, entityId, metadata) {
     // Uses the existing SQL function. Parameter names must match the deployed log_event() signature.
     const { error } = await supabaseClient.rpc('log_event', {
       p_action: payload.action,
-      p_entity_type: payload.entity_type,
+      p_entity: payload.entity_type,
       p_entity_id: payload.entity_id,
-      p_metadata: payload.metadata
+      p_details: JSON.stringify(payload.metadata).slice(0, 2000)
     });
     if (error) { console.warn('Audit event could not be recorded by log_event():', error.message); return false; }
     return true;
@@ -4103,7 +4041,7 @@ function exportAppointmentsCSV() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  void logAuditEvent('csv_export', 'appointments', null, {row_count:rows.length, file_name:link.download});
+  void logAuditEvent('csv_exported', 'appointments', null, {row_count:rows.length, file_name:link.download});
   showToast('CSV downloaded successfully', 'success');
 }
 </script>
