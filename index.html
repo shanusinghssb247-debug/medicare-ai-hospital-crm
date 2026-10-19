@@ -465,6 +465,7 @@
   /* Whatsapp green */
   .wa-green { color: #25D366; }
   .tag { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; font-size: 11px; color: var(--text-soft); }
+  .visit-type-tag { display:inline-flex; align-items:center; min-height:26px; padding:4px 10px; border-radius:8px; background:rgba(96,165,250,.08); border-color:rgba(96,165,250,.16); color:#e2e8f0; font-size:12px; font-weight:500; white-space:normal; }
 
   .section-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
   .workflow-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
@@ -1938,6 +1939,8 @@ async function renderAppointments() {
       slot_time,
       status,
       reason,
+      visit_type,
+      visit_outcome,
       source,
       patient_id,
       doctor_id,
@@ -2018,7 +2021,13 @@ async function renderAppointments() {
       ? slot.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' })
       : '—';
 
-    const type = a.reason || 'Consultation';
+    const rawType = String(a.visit_type || a.reason || 'General consultation').trim();
+    const normalizedType = rawType.toLowerCase();
+    const type = normalizedType.includes('follow') ? 'Follow-up'
+      : normalizedType.includes('emergency') ? 'Emergency Visit'
+      : normalizedType.includes('ipd') || normalizedType.includes('inpatient') ? 'IPD Visit'
+      : normalizedType.includes('opd') ? 'OPD Visit'
+      : rawType;
     const source = a.source || '—';
 
     return `
@@ -2034,7 +2043,7 @@ async function renderAppointments() {
           <strong>${timeText}</strong>
           <div style="font-size:11px;color:var(--text-muted)">${dateText}</div>
         </td>
-        <td>${type}</td>
+        <td><span class="tag visit-type-tag">${type}</span></td>
         <td>${statusBadge(a.status)}</td>
         <td>
           ${source === 'whatsapp'
@@ -2045,11 +2054,11 @@ async function renderAppointments() {
         </td>
         <td>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px"
-            onclick="showToast('Opening reschedule dialog...','info')">🔄</button>
+            onclick="openReschedule('${a.id}')" ${['cancelled','completed','missed'].includes(a.status) ? 'disabled title="This appointment cannot be rescheduled"' : 'title="Reschedule appointment"'}>🔄</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
-            onclick="cancelAppt('${a.id}','${patient}')">❌</button>
+            onclick="cancelAppt('${a.id}')" ${a.status === 'cancelled' ? 'disabled title="Already cancelled"' : 'title="Cancel appointment"'}>❌</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:2px"
-            onclick="showToast('Reminder sent to ${patient}!','success')">🔔</button>
+            onclick="showToast('Reminders are not connected. No message was sent.','info')" title="Reminder integration not connected">🔔</button>
         </td>
       </tr>
     `;
@@ -2063,8 +2072,314 @@ function filterApptTab(el, filter) {
   renderAppointments();
 }
 
-function cancelAppt(id, name) {
-  showToast(`${name}'s appointment has been cancelled. AI will notify them on WhatsApp.`, 'info');
+
+function localDateTimeValue(dateValue) {
+  if (!dateValue) return '';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function ensureRescheduleModal() {
+  let modal = document.getElementById('rescheduleModal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'rescheduleModal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rescheduleModalTitle">
+      <div class="modal-head">
+        <div class="modal-title" id="rescheduleModalTitle">Reschedule Appointment</div>
+        <button type="button" class="modal-close" id="rescheduleCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="rescheduleAppointmentSummary" class="alert blue" style="margin-bottom:16px"></div>
+        <div class="form-group">
+          <label class="form-label" for="rescheduleDoctor">Doctor</label>
+          <select class="form-select" id="rescheduleDoctor" required>
+            <option value="">Loading doctors…</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="rescheduleVisitType">Visit type</label>
+            <select class="form-select" id="rescheduleVisitType" required>
+              <option value="OPD">OPD</option>
+              <option value="IPD">IPD</option>
+              <option value="Emergency">Emergency</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rescheduleVisitOutcome">Visit outcome</label>
+            <select class="form-select" id="rescheduleVisitOutcome" required>
+              <option value="scheduled">Scheduled</option>
+              <option value="patient_arrived">Patient Arrived</option>
+              <option value="completed">Completed</option>
+              <option value="missed">Missed / No-show</option>
+              <option value="follow_up_required">Follow-up Required</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin:-4px 0 14px">Visit type and outcome are selectable here. Saving these fields to the database requires matching columns; this save updates the appointment slot and doctor only.</div>
+        <div class="form-group">
+          <label class="form-label" for="rescheduleDate">New date</label>
+          <input class="form-input" id="rescheduleDate" type="date" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="rescheduleHour">Hour</label>
+            <select class="form-select" id="rescheduleHour" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rescheduleMinute">Minute</label>
+            <select class="form-select" id="rescheduleMinute" required></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rescheduleAmPm">AM / PM</label>
+          <select class="form-select" id="rescheduleAmPm" required>
+            <option value="AM">AM</option><option value="PM">PM</option>
+          </select>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Time is interpreted as hospital-local time. Past slots and occupied slots are rejected.</div>
+        </div>
+        <div class="alert yellow" style="margin-top:12px">WhatsApp and voice notifications are not connected. No notification will be sent.</div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+          <button type="button" class="btn btn-ghost" id="rescheduleCancelBtn">Close</button>
+          <button type="button" class="btn btn-primary" id="rescheduleSaveBtn">Save new slot</button>
+        </div>
+        <div id="rescheduleError" role="status" style="font-size:12px;color:#fca5a5;margin-top:12px;display:none"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const close = () => modal.classList.remove('open');
+  modal.querySelector('#rescheduleCloseBtn').addEventListener('click', close);
+  modal.querySelector('#rescheduleCancelBtn').addEventListener('click', close);
+  modal.addEventListener('click', event => { if (event.target === modal) close(); });
+  modal.querySelector('#rescheduleSaveBtn').addEventListener('click', saveReschedule);
+  return modal;
+}
+
+let activeRescheduleAppointmentId = null;
+
+function openReschedule(id) {
+  if (!requireRole(['admin', 'manager', 'front desk', 'doctor'])) return;
+  const appointment = (window.__lastAppointmentRows || []).find(row => String(row.id) === String(id));
+  if (!appointment) {
+    showToast('Appointment details are not available. Refresh the appointment list and try again.', 'error');
+    return;
+  }
+  if (['cancelled', 'completed', 'missed'].includes(String(appointment.status || '').toLowerCase())) {
+    showToast('This appointment cannot be rescheduled in its current status.', 'error');
+    return;
+  }
+  if (!window.supabaseClient) {
+    showToast('Cannot reschedule: database connection is unavailable.', 'error');
+    return;
+  }
+  activeRescheduleAppointmentId = String(id);
+  const modal = ensureRescheduleModal();
+  const summary = modal.querySelector('#rescheduleAppointmentSummary');
+  summary.textContent = `Patient: ${appointment.patients?.name || 'Unknown patient'} · Doctor: ${appointment.doctors?.name || 'Unknown doctor'}`;
+  const currentSlot = String(appointment.slot_time || '').replace('T', ' ').slice(0, 16);
+  const [currentDate = '', currentTime = '09:00'] = currentSlot.split(' ');
+  let [currentHour = '09', currentMinute = '00'] = currentTime.split(':');
+  let hour24 = Number(currentHour);
+  const ampm = hour24 >= 12 ? 'PM' : 'AM';
+  const hour12 = (hour24 % 12) || 12;
+  modal.querySelector('#rescheduleDate').value = currentDate;
+  const visitType = String(appointment.visit_type || 'OPD');
+  modal.querySelector('#rescheduleVisitType').value = ['OPD','IPD','Emergency'].includes(visitType) ? visitType : 'OPD';
+  const visitOutcome = String(appointment.visit_outcome || 'scheduled').toLowerCase();
+  modal.querySelector('#rescheduleVisitOutcome').value = ['scheduled','patient_arrived','completed','missed','follow_up_required'].includes(visitOutcome) ? visitOutcome : 'scheduled';
+  modal.querySelector('#rescheduleHour').innerHTML = Array.from({length:12}, (_,i) => i+1).map(h => `<option value="${h}">${String(h).padStart(2,'0')}</option>`).join('');
+  modal.querySelector('#rescheduleMinute').innerHTML = ['00','15','30','45'].map(m => `<option value="${m}">${m}</option>`).join('');
+  modal.querySelector('#rescheduleHour').value = String(hour12);
+  modal.querySelector('#rescheduleMinute').value = ['00','15','30','45'].includes(currentMinute) ? currentMinute : '00';
+  modal.querySelector('#rescheduleAmPm').value = ampm;
+  const doctorSelect = modal.querySelector('#rescheduleDoctor');
+  doctorSelect.innerHTML = '<option value="">Loading doctors…</option>';
+  loadRescheduleDoctors(appointment.doctor_id).catch(err => {
+    doctorSelect.innerHTML = '<option value="">Could not load doctors</option>';
+    const box = modal.querySelector('#rescheduleError'); box.textContent = err.message || 'Could not load doctors.'; box.style.display = 'block';
+  });
+  modal.querySelector('#rescheduleError').style.display = 'none';
+  const saveButton = modal.querySelector('#rescheduleSaveBtn');
+  saveButton.disabled = false;
+  saveButton.textContent = 'Save new slot';
+  modal.classList.add('open');
+  input.focus();
+}
+
+async function loadRescheduleDoctors(selectedDoctorId) {
+  const modal = document.getElementById('rescheduleModal');
+  const select = modal.querySelector('#rescheduleDoctor');
+  const { data, error } = await window.supabaseClient
+    .from('doctors').select('id, name, department, specialty, is_active').order('name', { ascending: true });
+  if (error) throw new Error(`Could not load doctors: ${error.message}`);
+  const doctors = (data || []).filter(d => d.is_active !== false || String(d.id) === String(selectedDoctorId));
+  if (!doctors.length) throw new Error('No active doctors were found.');
+  select.innerHTML = '<option value="">Select doctor</option>' + doctors.map(d => {
+    const label = [d.name, d.department || d.specialty].filter(Boolean).join(' — ');
+    return `<option value="${String(d.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}">${label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</option>`;
+  }).join('');
+  select.value = String(selectedDoctorId || '');
+}
+
+function getRescheduleLocalValue() {
+  const modal = document.getElementById('rescheduleModal');
+  const date = modal.querySelector('#rescheduleDate').value;
+  const hour12 = Number(modal.querySelector('#rescheduleHour').value);
+  const minute = modal.querySelector('#rescheduleMinute').value;
+  const ampm = modal.querySelector('#rescheduleAmPm').value;
+  if (!date || !hour12 || !minute || !['AM','PM'].includes(ampm)) return '';
+  const hour24 = (hour12 % 12) + (ampm === 'PM' ? 12 : 0);
+  return `${date}T${String(hour24).padStart(2,'0')}:${minute}`;
+}
+
+function toHospitalWallClock(inputValue) {
+  // The current schema uses a timestamp without time zone for hospital-local wall time.
+  // Do not send an ISO string ending in Z, which can shift the intended slot.
+  return inputValue.replace('T', ' ') + ':00';
+}
+
+function sameWallClock(dbValue, expectedValue) {
+  if (!dbValue || !expectedValue) return false;
+  const normalizedDb = String(dbValue).replace('T', ' ').replace(/\.\d+$/, '').slice(0, 19);
+  return normalizedDb === expectedValue;
+}
+
+async function saveReschedule() {
+  const modal = document.getElementById('rescheduleModal');
+  const input = modal?.querySelector('#rescheduleDate');
+  const saveButton = modal?.querySelector('#rescheduleSaveBtn');
+  const errorBox = modal?.querySelector('#rescheduleError');
+  const id = activeRescheduleAppointmentId;
+  const appointment = (window.__lastAppointmentRows || []).find(row => String(row.id) === String(id));
+  const showError = message => {
+    if (errorBox) { errorBox.textContent = message; errorBox.style.display = 'block'; }
+  };
+  const localValue = modal ? getRescheduleLocalValue() : '';
+  const selectedDoctorId = modal?.querySelector('#rescheduleDoctor')?.value;
+  if (!id || !appointment || !input || !localValue || !selectedDoctorId || !window.supabaseClient) {
+    showError('Missing appointment, selected slot, or database connection.'); return;
+  }
+  if (!requireRole(['admin', 'manager', 'front desk', 'doctor'])) return;
+  if (['cancelled', 'completed', 'missed'].includes(String(appointment.status || '').toLowerCase())) {
+    showError('This appointment is no longer eligible for rescheduling. Refresh the list.'); return;
+  }
+  const newDate = new Date(localValue);
+  if (Number.isNaN(newDate.getTime())) { showError('Choose a valid date and time.'); return; }
+  if (newDate.getTime() <= Date.now()) { showError('Past appointment slots are not allowed.'); return; }
+  const newSlot = toHospitalWallClock(localValue);
+  const oldSlot = appointment.slot_time ? String(appointment.slot_time).replace('T', ' ').replace(/\.\d+$/, '').slice(0, 19) : '';
+  if (newSlot === oldSlot) { showError('Choose a different date or time.'); return; }
+
+  saveButton.disabled = true;
+  saveButton.textContent = 'Saving…';
+  errorBox.style.display = 'none';
+  try {
+    // Friendly pre-check. The database unique constraint/index must remain the final guard.
+    const { data: conflicts, error: conflictError } = await window.supabaseClient
+      .from('appointments').select('id')
+      .eq('doctor_id', selectedDoctorId)
+      .eq('slot_time', newSlot)
+      .neq('status', 'cancelled')
+      .neq('id', id).limit(1);
+    if (conflictError) throw new Error(`Could not verify slot availability: ${conflictError.message}`);
+    if (conflicts?.length) { showError('That doctor already has an appointment at this time. Choose another slot.'); return; }
+
+    const selectedVisitType = modal.querySelector('#rescheduleVisitType').value;
+    const selectedVisitOutcome = modal.querySelector('#rescheduleVisitOutcome').value;
+    // Keep the existing appointment status vocabulary compatible with the current CRM.
+    const statusForOutcome = {
+      scheduled: appointment.status || 'confirmed',
+      patient_arrived: 'confirmed',
+      completed: 'completed',
+      missed: 'missed',
+      follow_up_required: appointment.status || 'confirmed'
+    };
+    const updatePayload = {
+      doctor_id: selectedDoctorId,
+      slot_time: newSlot,
+      visit_type: selectedVisitType,
+      visit_outcome: selectedVisitOutcome,
+      status: statusForOutcome[selectedVisitOutcome] || appointment.status || 'confirmed',
+      rescheduled: true,
+      confirmed_via_call: false,
+      retry_count: 0
+    };
+    const { data, error } = await window.supabaseClient
+      .from('appointments').update(updatePayload)
+      .eq('id', id)
+      .select('id, slot_time, status, doctor_id, visit_type, visit_outcome');
+    if (error) throw new Error(`Database update failed: ${error.message}`);
+
+    let verifiedRow = Array.isArray(data) && data.length === 1 ? data[0] : null;
+    if (!verifiedRow) {
+      const { data: readBack, error: readError } = await window.supabaseClient
+        .from('appointments').select('id, slot_time, status, doctor_id, visit_type, visit_outcome').eq('id', id).maybeSingle();
+      if (readError) throw new Error(`Update response was empty and verification read failed: ${readError.message}`);
+      verifiedRow = readBack || null;
+    }
+    if (!verifiedRow || String(verifiedRow.id) !== String(id) || !sameWallClock(verifiedRow.slot_time, newSlot) || String(verifiedRow.doctor_id) !== String(selectedDoctorId) || verifiedRow.visit_type !== selectedVisitType || verifiedRow.visit_outcome !== selectedVisitOutcome || verifiedRow.status !== updatePayload.status) {
+      throw new Error('The database did not confirm the new slot, doctor, status, visit type and outcome. No success was reported. Refresh and check permissions/schema.');
+    }
+
+    modal.classList.remove('open');
+    showToast('Appointment, visit type, outcome and status saved and verified. No notification was sent.', 'success');
+    await renderAppointments();
+    if (typeof refreshDashboard === 'function') await refreshDashboard();
+  } catch (error) {
+    console.error('Appointment reschedule failed:', error);
+    showError(error.message || 'Rescheduling failed. No success was reported.');
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = 'Save new slot';
+  }
+}
+
+async function cancelAppt(id) {
+  // Cancellation must be persisted and verified; never report success from the UI alone.
+  if (!requireRole(['admin', 'manager', 'front desk'])) return;
+  if (!id || !window.supabaseClient) {
+    showToast('Cannot cancel: appointment or database connection is unavailable.', 'error');
+    return;
+  }
+
+  const appointment = (window.__lastAppointmentRows || []).find(row => String(row.id) === String(id));
+  if (appointment && appointment.status === 'cancelled') {
+    showToast('This appointment is already cancelled.', 'info');
+    return;
+  }
+  if (!window.confirm('Cancel this appointment? This will update its status in the database.')) return;
+
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('appointments')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
+      .neq('status', 'cancelled')
+      .select('id, status');
+
+    if (error) {
+      console.error('Appointment cancellation failed:', error);
+      showToast('Cancellation failed. The database did not confirm the update.', 'error');
+      return;
+    }
+    if (!Array.isArray(data) || data.length !== 1 || data[0].status !== 'cancelled') {
+      showToast('Cancellation was not confirmed by the database. Check row status and staff permissions.', 'error');
+      await renderAppointments();
+      return;
+    }
+
+    showToast('Appointment cancelled and database update verified. WhatsApp notification was not sent.', 'success');
+    await renderAppointments();
+    if (typeof refreshDashboard === 'function') await refreshDashboard();
+  } catch (error) {
+    console.error('Unexpected appointment cancellation error:', error);
+    showToast('Cancellation failed due to an unexpected error. No success was reported.', 'error');
+  }
 }
 
 // ─── PATIENTS ───
@@ -2618,7 +2933,11 @@ function showToast(msg, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  const iconEl = document.createElement('span');
+  iconEl.textContent = icons[type] || icons.info;
+  const messageEl = document.createElement('span');
+  messageEl.textContent = String(msg ?? '');
+  toast.append(iconEl, messageEl);
   container.appendChild(toast);
   setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100px)'; toast.style.transition = '0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
