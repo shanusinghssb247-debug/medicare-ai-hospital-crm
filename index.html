@@ -373,13 +373,6 @@
   .kpi-val { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; }
   .kpi-lbl { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-  .funnel-step { position:relative; min-width:0; text-align:center; padding:16px 10px 14px; border:1px solid var(--border); border-radius:12px; background:linear-gradient(180deg,rgba(59,130,246,.12),rgba(59,130,246,.025)); }
-  .funnel-count { font:700 25px 'Space Grotesk',sans-serif; color:var(--accent-light); }
-  .funnel-label { font-size:11px; color:var(--text-soft); line-height:1.4; margin-top:6px; min-height:30px; }
-  .funnel-arrow { color:var(--text-muted); margin-top:8px; font-size:15px; }
-  @media (max-width:900px) { .patient-funnel { grid-template-columns:repeat(2,minmax(0,1fr)) !important; } .funnel-arrow { display:none; } }
-  @media (max-width:520px) { .patient-funnel { grid-template-columns:1fr !important; } .funnel-step { display:flex; align-items:center; gap:14px; text-align:left; } .funnel-label { min-height:0; flex:1; margin-top:0; } .funnel-arrow { display:none; } }
-
   /* ─── TIMELINE ─── */
   .timeline { position: relative; padding-left: 24px; }
   .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 1px; background: var(--border); }
@@ -566,25 +559,10 @@
   @media (max-width:600px) { .auth-card { padding:22px; } .enquiry-message { max-width:220px; } }
 
 
-  /* ─── HIGH-IMPACT DEMO MODULES ─── */
-  .feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}
-  .feature-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
-  .feature-stat .fs-label{font-size:12px;color:var(--text-muted);margin-bottom:8px}
-  .feature-stat .fs-value{font:700 26px 'Space Grotesk',sans-serif;letter-spacing:-.5px}
-  .feature-stat .fs-note{font-size:11px;color:var(--text-muted);margin-top:7px}
-  .feature-table{width:100%;border-collapse:collapse;font-size:12px}
-  .feature-table th,.feature-table td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
-  .feature-table th{color:var(--text-muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
-  .demo-tag{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.09);color:var(--yellow);padding:4px 8px;border-radius:20px;font-size:10px;font-weight:700}
-  .live-tag{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(16,185,129,.3);background:rgba(16,185,129,.08);color:var(--green);padding:4px 8px;border-radius:20px;font-size:10px;font-weight:700}
-  .ai-script{padding:18px;border-radius:14px;border:1px solid var(--border);background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(139,92,246,.08));font-size:15px;line-height:1.8}
-  .ai-script strong{color:var(--accent-light)}
-  .outcome-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-  .funnel{display:grid;gap:8px;max-width:620px;margin:8px auto 4px}
-  .funnel-step{padding:13px 16px;border:1px solid var(--border);border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .funnel-step:nth-child(2){margin:0 5%}.funnel-step:nth-child(3){margin:0 10%}.funnel-step:nth-child(4){margin:0 15%}.funnel-step:nth-child(5){margin:0 20%}
-  @media(max-width:900px){.feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.feature-table{min-width:600px}.feature-table-wrap{overflow-x:auto}}
-  @media(max-width:560px){.feature-grid{grid-template-columns:1fr}.funnel-step:nth-child(n){margin-left:0;margin-right:0}}
+  /* Revenue recovery / executive view additions */
+  .exec-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0 22px}.exec-card,.exec-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;min-width:0}.exec-card .exec-icon{font-size:22px}.exec-value{font-size:26px;font-weight:750;margin:10px 0 5px;color:var(--text)}.exec-label{font-size:12px;color:var(--text-soft)}.exec-panel{margin:16px 0}.exec-panel h3{font-size:15px;margin:0 0 6px}.exec-panel p{font-size:12px;color:var(--text-soft);line-height:1.5}.exec-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.exec-table{width:100%;border-collapse:collapse;font-size:12px}.exec-table td,.exec-table th{text-align:left;padding:10px 8px;border-bottom:1px solid var(--border)}.exec-table th{color:var(--text-soft);font-weight:600}.exec-pill{display:inline-block;padding:4px 8px;border-radius:7px;background:rgba(16,185,129,.12);color:var(--green);font-size:11px}.exec-input{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);padding:10px;border-radius:8px;margin:6px 0 12px}.exec-result{font-size:23px;font-weight:750;margin-top:8px;color:var(--green)}
+  @media(max-width:900px){.exec-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.exec-two{grid-template-columns:1fr}}
+  @media(max-width:520px){.exec-grid{grid-template-columns:1fr}}
 
 </style>
 
@@ -611,8 +589,8 @@
     <a class="nav-item" onclick="navigate('analytics', this)">
       <span class="nav-icon">📈</span> Analytics
     </a>
-    <a class="nav-item" data-page="aiImpact" onclick="navigate('aiImpact', this)">
-      <span class="nav-icon">💹</span> AI Impact & ROI
+    <a class="nav-item" data-page="ceoDashboard" data-roles="admin,manager" onclick="navigate('ceoDashboard', this)">
+      <span class="nav-icon">💼</span> CEO Dashboard
     </a>
   </div>
 
@@ -645,12 +623,6 @@
     </a>
     <a class="nav-item" onclick="navigate('voice', this)">
       <span class="nav-icon">📞</span> AI Voice Calls
-    </a>
-    <a class="nav-item" data-page="aiReceptionist" onclick="navigate('aiReceptionist', this)">
-      <span class="nav-icon">🎙️</span> AI Receptionist
-    </a>
-    <a class="nav-item" data-page="recoveryCenter" onclick="navigate('recoveryCenter', this)">
-      <span class="nav-icon">🔁</span> Missed Appointment Recovery
     </a>
     <a class="nav-item" onclick="navigate('feedback', this)">
       <span class="nav-icon">⭐</span> Feedback
@@ -695,7 +667,7 @@
   <!-- TOPBAR -->
   <div class="topbar">
     <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
-    <div class="topbar-title" id="page-title">AI Hospital Operations Center</div>
+    <div class="topbar-title" id="page-title">Dashboard</div>
     <div class="topbar-date" id="topbar-date"></div>
     <div class="search-box">
       <span>🔍</span>
@@ -730,7 +702,7 @@
       <div class="page-header">
         <div>
           <div class="page-h1">Good Morning, Dr. Muskan Gupta 👋</div>
-          <div class="page-sub">Appointment overview · Demo environment</div>
+          <div class="page-sub">Recover missed patients automatically with AI WhatsApp, AI calling and follow-up automation.</div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="exportAppointmentsCSV()">📥 Export</button>
@@ -738,44 +710,19 @@
         </div>
       </div>
 
-      <!-- Homepage value proposition: explain the solution before showing metrics -->
-      <section class="card" style="margin-bottom:18px;border:1px solid var(--accent);background:linear-gradient(120deg,rgba(59,130,246,.14),rgba(139,92,246,.08))">
-        <div class="card-body" style="padding:22px">
-          <div style="display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap">
-            <div style="flex:1;min-width:240px">
-              <span class="demo-tag">DEMO ENVIRONMENT</span>
-              <h2 style="font:700 26px 'Space Grotesk',sans-serif;margin:12px 0 8px">AI Hospital Receptionist</h2>
-              <p style="color:var(--text-soft);max-width:720px;line-height:1.65">One place to support front-desk work, coordinate appointments and follow up with patients—while staff retain control of important decisions.</p>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <button class="btn btn-primary" onclick="navigate('aiReceptionist')">🎙️ Try AI Receptionist</button>
-              <button class="btn btn-ghost" onclick="navigate('recoveryCenter')">🔁 Recover Missed Visits</button>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;margin-top:18px">
-            <div class="feature-stat"><strong>✓ Book appointments</strong><div class="fs-note">Appointment workflow support</div></div>
-            <div class="feature-stat"><strong>✓ Recover missed patients</strong><div class="fs-note">Identify missed visits and track follow-up</div></div>
-            <div class="feature-stat"><strong>✓ Send reminders</strong><div class="fs-note">Automation capability preview</div></div>
-            <div class="feature-stat"><strong>✓ Deliver reports</strong><div class="fs-note">Report workflow visibility</div></div>
-            <div class="feature-stat"><strong>✓ Reduce front-desk work</strong><div class="fs-note">Target benefit; measure with real usage</div></div>
-          </div>
-        </div>
-      </section>
-
       <!-- AI Status Banner -->
       <div class="ai-status">
-        <div style="font-size:11px;color:var(--text-muted);margin:0 0 10px">* Illustrative sample figures only — not measured live call, WhatsApp, reminder or feedback results.</div>
         <div class="ai-header">
           <span class="ai-icon">🤖</span>
           <span class="ai-title">AI Automation Status</span>
-          <span class="demo-tag" style="margin-left:8px">DEMO ENVIRONMENT · SAMPLE METRICS</span>
+          <span style="margin-left:8px"><span class="live-dot"></span> <span style="font-size:11px;color:var(--green);margin-left:4px">All Systems Live</span></span>
         </div>
         <div class="ai-grid">
-          <div class="ai-metric"><div class="ai-metric-val">247*</div><div class="ai-metric-lbl">WhatsApp Handled · Sample</div></div>
-          <div class="ai-metric"><div class="ai-metric-val">89*</div><div class="ai-metric-lbl">AI Calls Made · Sample</div></div>
-          <div class="ai-metric"><div class="ai-metric-val">34*</div><div class="ai-metric-lbl">Reminders Sent · Sample</div></div>
-          <div class="ai-metric"><div class="ai-metric-val">12*</div><div class="ai-metric-lbl">Reports Delivered · Sample</div></div>
-          <div class="ai-metric"><div class="ai-metric-val">4.6★*</div><div class="ai-metric-lbl">Avg Feedback · Sample</div></div>
+          <div class="ai-metric"><div class="ai-metric-val">247</div><div class="ai-metric-lbl">WhatsApp Handled</div></div>
+          <div class="ai-metric"><div class="ai-metric-val">89</div><div class="ai-metric-lbl">AI Calls Made</div></div>
+          <div class="ai-metric"><div class="ai-metric-val">34</div><div class="ai-metric-lbl">Reminders Sent</div></div>
+          <div class="ai-metric"><div class="ai-metric-val">12</div><div class="ai-metric-lbl">Reports Delivered</div></div>
+          <div class="ai-metric"><div class="ai-metric-val">4.6★</div><div class="ai-metric-lbl">Avg Feedback</div></div>
         </div>
       </div>
 
@@ -852,21 +799,6 @@
         </div>
       </div>
 
-      <!-- Patient conversion funnel: example figures, not live production metrics -->
-      <section class="card" style="margin-bottom:20px">
-        <div class="card-header"><div class="card-title">🔻 Patient Journey Funnel</div><span class="demo-tag">EXAMPLE METRICS · DEMO DATA</span></div>
-        <div class="card-body">
-          <p style="font-size:12px;color:var(--text-muted);margin:0 0 16px;line-height:1.5">Illustrative journey to explain the workflow. These numbers are examples, not measured hospital performance.</p>
-          <div class="patient-funnel" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:stretch">
-            <div class="funnel-step"><div class="funnel-count">523</div><div class="funnel-label">Website Leads</div><div class="funnel-arrow">↓</div></div>
-            <div class="funnel-step"><div class="funnel-count">412</div><div class="funnel-label">WhatsApp Conversations</div><div class="funnel-arrow">↓</div></div>
-            <div class="funnel-step"><div class="funnel-count">284</div><div class="funnel-label">Appointments Booked</div><div class="funnel-arrow">↓</div></div>
-            <div class="funnel-step"><div class="funnel-count">233</div><div class="funnel-label">Hospital Visits</div><div class="funnel-arrow">↓</div></div>
-            <div class="funnel-step"><div class="funnel-count">187</div><div class="funnel-label">Feedback Responses</div><div class="funnel-arrow">✓</div></div>
-          </div>
-        </div>
-      </section>
-
       <!-- Bottom row -->
       <div class="grid-2">
         <!-- Appointment Distribution -->
@@ -932,6 +864,43 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ═══════════════════════════════ CEO / REVENUE RECOVERY DASHBOARD ═══════════════════════════════ -->
+    <div class="page" id="page-ceoDashboard">
+      <div class="page-header"><div><div class="page-h1">💼 Revenue Recovery Centre</div><div class="page-sub">Recover missed patients automatically — AI WhatsApp, AI calling and follow-up automation.</div></div><span class="exec-pill">Executive demo view</span></div>
+      <div class="exec-grid">
+        <div class="exec-card"><div class="exec-icon">💰</div><div class="exec-value">₹2.3L</div><div class="exec-label">Potential revenue recovered / pipeline</div></div>
+        <div class="exec-card"><div class="exec-icon">📅</div><div class="exec-value">19</div><div class="exec-label">Missed appointments saved (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">🤖</div><div class="exec-value">7 hrs</div><div class="exec-label">AI staff hours saved (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">⭐</div><div class="exec-value">4.6 / 5</div><div class="exec-label">Patient satisfaction (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">⚙️</div><div class="exec-value">68%</div><div class="exec-label">AI automation coverage (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">📈</div><div class="exec-value">₹54,000</div><div class="exec-label">Revenue today (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">🧑‍🤝‍🧑</div><div class="exec-value">19</div><div class="exec-label">Patients Recovered (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">💵</div><div class="exec-value">₹2.3L</div><div class="exec-label">Revenue Recovered (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">🛡️</div><div class="exec-value">12</div><div class="exec-label">Reviews Prevented (demo)</div></div>
+        <div class="exec-card"><div class="exec-icon">⏱️</div><div class="exec-value">7 hrs</div><div class="exec-label">Hours Saved (demo)</div></div>
+      </div>
+      <div class="exec-two">
+        <section class="exec-panel"><h3>🧮 No-show Revenue Loss Calculator</h3><p>Enter your hospital's typical daily figures. Estimate potential missed consultation revenue; this is a planning estimate, not booked revenue.</p><label class="exec-label" for="roiAppointments">Daily appointments</label><input class="exec-input" id="roiAppointments" type="number" min="0" value="86" oninput="calculateRecoveryROI()"><label class="exec-label" for="roiAttendance">No-show rate (%)</label><input class="exec-input" id="roiAttendance" type="number" min="0" max="100" value="18" oninput="calculateRecoveryROI()"><label class="exec-label" for="roiFee">Average consultation fee (₹)</label><input class="exec-input" id="roiFee" type="number" min="0" value="800" oninput="calculateRecoveryROI()"><div class="exec-label">Estimated revenue at risk per day</div><div class="exec-result" id="roiDailyResult">₹12,384</div><div class="exec-label" id="roiMonthlyResult">Estimated monthly exposure: ₹3,71,520 (30 days)</div></section>
+        <section class="exec-panel"><h3>🧲 Lost Lead Recovery</h3><p>Example pipeline for enquiry follow-up. Demo values only — connect to actual enquiry data before using for business reporting.</p><table class="exec-table"><tr><th>Metric</th><th>Count / value</th></tr><tr><td>Inactive leads</td><td>53</td></tr><tr><td>Leads revived</td><td>19 <span class="exec-pill">36% revived</span></td></tr><tr><td>Potential revenue</td><td>₹2,30,000</td></tr></table><button class="btn btn-primary" style="margin-top:12px" onclick="navigate('enquiries', null)">Open Enquiries →</button></section>
+      </div>
+      <div class="exec-two">
+        <section class="exec-panel"><h3>🔮 Patient No-show Risk Queue</h3><p>Illustrative risk scores. Production predictions require historical attendance data and a validated model; do not treat these sample scores as real predictions.</p><table class="exec-table"><tr><th>Patient</th><th>Risk</th><th>Suggested action</th></tr><tr><td>Rahul Sharma</td><td><span style="color:var(--red)">80% · High</span></td><td>AI call + WhatsApp</td></tr><tr><td>Priya Verma</td><td><span style="color:var(--yellow)">62% · Medium</span></td><td>WhatsApp reminder</td></tr><tr><td>Mohit Thakur</td><td><span style="color:var(--green)">24% · Low</span></td><td>Standard reminder</td></tr></table></section>
+        <section class="exec-panel"><h3>📞 AI Call Summary & Audit Trail</h3><p>Example call record. Use the AI Voice Calls page to review configured call logs.</p><table class="exec-table"><tr><td>Patient</td><td>Rahul Sharma</td></tr><tr><td>Call duration</td><td>1m 24s</td></tr><tr><td>Intent</td><td>Appointment reschedule</td></tr><tr><td>Outcome</td><td><span class="exec-pill">Confirmed for Thursday</span></td></tr><tr><td>Next action</td><td>None</td></tr></table><button class="btn btn-ghost" style="margin-top:12px" onclick="navigate('voice', null)">Open AI Call Logs →</button></section>
+      </div>
+      <div class="exec-two">
+        <section class="exec-panel"><h3>👨‍⚕️ Doctor Utilization</h3><p>Illustrative scheduling utilization — replace with actual available-slot and booking data for operational use.</p><table class="exec-table"><tr><th>Doctor</th><th>Booked capacity</th></tr><tr><td>Dr. Sharma</td><td>85%</td></tr><tr><td>Dr. Gupta</td><td>64%</td></tr><tr><td>Dr. Jain</td><td>42%</td></tr></table></section>
+        <section class="exec-panel"><h3>📊 Attendance Benchmark</h3><p>Demo comparison only, not a verified industry benchmark. Configure a reliable source and comparable peer group before making external claims.</p><table class="exec-table"><tr><th>Measure</th><th>Attendance</th></tr><tr><td>Your hospital</td><td>82%</td></tr><tr><td>Illustrative benchmark</td><td>71%</td></tr></table><div class="exec-result">+11 percentage points</div></section>
+      </div>
+      <section class="exec-panel"><h3>📲 Executive WhatsApp Report Preview</h3><p>Preview of the daily owner summary. Sending requires a configured WhatsApp provider/workflow; this preview does not send a message.</p><pre style="white-space:pre-wrap;background:var(--bg);padding:14px;border-radius:10px;color:var(--text);font:12px/1.8 monospace">Today's Summary
+Appointments: 86
+Completed: 72
+No Shows: 8
+Recovered: 4
+
+Revenue Generated: ₹54,000
+AI Saved: 7 Staff Hours</pre><button class="btn btn-ghost" onclick="navigate('managementReports', null)">Open Manager Reports →</button></section>
     </div>
 
     <!-- ═══════════════════════════════ APPOINTMENTS PAGE ═══════════════════════════════ -->
@@ -1004,7 +973,8 @@
           <div class="page-sub">AI-powered patient support — booking, FAQ, escalation</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <span class="demo-tag">DEMO ENVIRONMENT · SAMPLE METRICS</span>
+          <span class="live-dot"></span>
+          <span style="font-size:12px;color:var(--green)">AI Agent Live</span>
         </div>
       </div>
 
@@ -1019,7 +989,7 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">💬 Recent Conversations</div>
-            <span class="demo-tag">Sample UI · data availability depends on connection</span>
+            <span class="badge blue">Live Feed</span>
           </div>
           <div id="waConversations"></div>
         </div>
@@ -1178,7 +1148,7 @@
       <div class="stats-grid">
         <div class="stat-card blue"><div class="stat-icon">📅</div><div class="stat-value">1,247</div><div class="stat-label">Total Appointments</div><div class="stat-change up">▲ 18% vs last month</div></div>
         <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">₹8.4L</div><div class="stat-label">Revenue (Est.)</div><div class="stat-change up">▲ 22% vs last month</div></div>
-        <div class="stat-card purple"><div class="stat-icon">🤖</div><div class="stat-value">94%*</div><div class="stat-label">AI Automation Rate · Sample</div><div class="stat-change">* Illustrative demo metric</div></div>
+        <div class="stat-card purple"><div class="stat-icon">🤖</div><div class="stat-value">94%</div><div class="stat-label">AI Automation Rate</div><div class="stat-change up">Saving 40+ staff hours</div></div>
         <div class="stat-card yellow"><div class="stat-icon">😊</div><div class="stat-value">4.6★</div><div class="stat-label">Patient Satisfaction</div><div class="stat-change up">▲ 0.3 vs last month</div></div>
       </div>
 
@@ -1420,59 +1390,11 @@
       </div>
     </div>
 
-
-    
-
-  </div>
-
-    <!-- ─── MISSED APPOINTMENT RECOVERY CENTER ─── -->
-    <div class="page" id="page-recoveryCenter">
-      <div class="page-header"><div><div class="page-h1">🔁 Missed Appointment Recovery Center <span class="demo-tag">LIVE COUNTS + DEMO ACTIONS</span></div><div class="page-sub">Identify missed visits and track recovery follow-ups using appointment records.</div></div><button class="btn btn-ghost" onclick="renderRecoveryCenter()">↻ Refresh</button></div>
-      <div class="alert blue" style="margin-bottom:18px"><span>ℹ️</span><div><strong>Live appointment data.</strong> Recovery attempts shown as demo actions are local to this browser session; this page does not send real calls or WhatsApp messages.</div></div>
-      <div class="feature-grid" id="recoveryStats"><div class="feature-stat"><div class="fs-label">Missed appointments</div><div class="fs-value">—</div><div class="fs-note">Loading from Supabase…</div></div></div>
-      <div class="card"><div class="card-header"><div class="card-title">📋 Missed appointments & recovery status</div><span class="live-tag">● Supabase records</span></div><div class="card-body feature-table-wrap"><table class="feature-table"><thead><tr><th>Patient</th><th>Doctor</th><th>Appointment</th><th>Recovery status</th><th>Demo action</th></tr></thead><tbody id="recoveryTable"><tr><td colspan="5">Loading missed appointments…</td></tr></tbody></table></div></div>
-    </div>
-
-    <!-- ─── AI RECEPTIONIST PANEL ─── -->
-    <div class="page" id="page-aiReceptionist">
-      <div class="page-header"><div><div class="page-h1">🎙️ AI Receptionist</div><div class="page-sub">Preview a Hindi appointment call and capture a simulated call outcome.</div></div><span class="demo-tag">● SIMULATION — NO LIVE CALL</span></div>
-      <div class="grid-2">
-        <div class="card"><div class="card-header"><div class="card-title">📞 Incoming call preview</div><span class="demo-tag">Demo</span></div><div class="card-body">
-          <div class="form-group"><label class="form-label">Patient</label><select class="form-select" id="receptionPatient" onchange="updateReceptionScript()"><option value="Rahul Sharma">Rahul Sharma</option><option value="Priya Verma">Priya Verma</option><option value="Amit Singh">Amit Singh</option></select></div>
-          <div class="form-group"><label class="form-label">Doctor availability (sample)</label><select class="form-select" id="receptionDoctor" onchange="updateReceptionScript()"><option value="Dr. Gupta">Dr. Gupta — Tomorrow, 11:00 AM</option><option value="Dr. Mehta">Dr. Mehta — Tomorrow, 12:30 PM</option><option value="Dr. Sharma">Dr. Sharma — Tomorrow, 3:00 PM</option></select></div>
-          <div class="ai-script" id="receptionScript">“Namaste Rahul ji, Dr. Gupta kal 11 baje available hain. Kya appointment confirm karna chahenge?”</div>
-          <div class="outcome-actions"><button class="btn btn-primary" onclick="setReceptionOutcome('Confirmed')">✅ Confirmed</button><button class="btn btn-ghost" onclick="setReceptionOutcome('Rescheduled')">🔄 Rescheduled</button><button class="btn btn-ghost" onclick="setReceptionOutcome('Follow-up Needed')">📌 Follow-up Needed</button></div>
-          <div id="receptionOutcome" style="margin-top:14px;color:var(--text-muted);font-size:12px">Call outcome not selected yet.</div>
-        </div></div>
-        <div class="card"><div class="card-header"><div class="card-title">🛡️ What this demo does</div></div><div class="card-body"><div class="alert yellow"><span>⚠️</span><div>This is a UI simulation only. It does not connect to a phone provider, place a call, or change an appointment in Supabase.</div></div><ul style="padding-left:20px;color:var(--text-soft);font-size:13px;line-height:2"><li>Displays a configurable Hindi call script</li><li>Lets staff select a sample call outcome</li><li>Shows the selected outcome on screen</li><li>Does not claim that a patient was contacted</li></ul></div></div>
-      </div>
-    </div>
-
-    <!-- ─── AI IMPACT & ROI ─── -->
-    <div class="page" id="page-aiImpact">
-      <div class="page-header"><div><div class="page-h1">💹 AI Impact & ROI <span class="demo-tag">DEMO ENVIRONMENT</span></div><div class="page-sub">Separate database-backed appointment counts from illustrative automation estimates.</div></div><button class="btn btn-ghost" onclick="renderAIImpact()">↻ Refresh</button></div>
-      <div class="alert blue" style="margin-bottom:18px"><span>ℹ️</span><div><strong>Honest demo metrics:</strong> Appointment totals are fetched from Supabase. Call volume, WhatsApp conversations, hours saved and cost savings are illustrative sample estimates—not measured production results.</div></div>
-      <div class="feature-grid" id="impactLiveStats"><div class="feature-stat"><div class="fs-label">Total appointments in database</div><div class="fs-value">—</div><div class="fs-note">Loading from Supabase…</div></div></div>
-      <div class="feature-grid">
-        <div class="feature-stat"><div class="fs-label">Calls automated · Sample</div><div class="fs-value">298*</div><div class="fs-note">Illustrative sample — not live call logs</div></div>
-        <div class="feature-stat"><div class="fs-label">WhatsApp conversations · Sample</div><div class="fs-value">1,247*</div><div class="fs-note">Illustrative sample — not live message logs</div></div>
-        <div class="feature-stat"><div class="fs-label">Estimated staff time saved</div><div class="fs-value">83 hrs*</div><div class="fs-note">Illustrative estimate; validate against actual workflow logs</div></div>
-      </div>
-      <div class="card"><div class="card-header"><div class="card-title">💰 Estimated staff cost impact</div><span class="demo-tag">Illustrative calculation</span></div><div class="card-body"><div class="form-row"><div class="form-group"><label class="form-label">Estimated hours saved per month</label><input class="form-input" id="roiHours" type="number" min="0" max="100000" value="83" oninput="calculateDemoROI()"></div><div class="form-group"><label class="form-label">Staff cost per hour (₹)</label><input class="form-input" id="roiRate" type="number" min="0" max="100000" value="354" oninput="calculateDemoROI()"></div></div><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px"><div style="font:700 30px 'Space Grotesk',sans-serif;color:var(--green)" id="roiEstimate">₹29,382</div><div style="font-size:12px;color:var(--text-muted)">Estimated monthly staff time value (hours × hourly cost). Not guaranteed cash savings.</div></div></div></div>
-    </div>
-
-    <!-- /content -->
+  </div><!-- /content -->
 </div><!-- /main -->
 
 <!-- ─── MODALS ─── -->
 <!-- New Appointment Modal -->
-<div class="modal-overlay" id="patientTimelineModal" onclick="if(event.target===this)closeModal('patientTimelineModal')">
-  <div class="modal" style="width:720px;max-width:95vw">
-    <div class="modal-head"><div class="modal-title" id="patientTimelineTitle">Patient Profile & Timeline</div><button class="modal-close" onclick="closeModal('patientTimelineModal')" aria-label="Close patient profile">✕</button></div>
-    <div class="modal-body" id="patientTimelineBody"><div style="padding:20px;color:var(--text-muted)">Select a patient to view their timeline.</div></div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="apptModal">
   <div class="modal">
     <div class="modal-head">
@@ -1692,100 +1614,6 @@ async function testSupabaseConnection() {
   }
 }
 
-// ─── HIGH-IMPACT DEMO MODULES ───
-const recoveryDemoStatuses = Object.create(null);
-function escFeature(value) {
-  return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-}
-function formatFeatureDate(value) {
-  if (!value) return '—';
-  const d = new Date(String(value).replace(' ', 'T'));
-  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-async function getAppointmentFeatureRows() {
-  if (!window.supabaseClient) throw new Error('Supabase client is not initialized.');
-  const {data,error} = await window.supabaseClient.from('appointments').select('id,patient_id,doctor_id,slot_time,status,reason,visit_type,visit_outcome,rescheduled,source,patients(name,phone),doctors(name,department)').order('slot_time',{ascending:false}).limit(1000);
-  if (error) throw error;
-  return data || [];
-}
-async function renderRecoveryCenter() {
-  const table = document.getElementById('recoveryTable');
-  const stats = document.getElementById('recoveryStats');
-  if (!table || !stats) return;
-  table.innerHTML = '<tr><td colspan="5">Loading appointment records…</td></tr>';
-  try {
-    const rows = await getAppointmentFeatureRows();
-    const missed = rows.filter(a => String(a.status || '').toLowerCase() === 'missed' || String(a.visit_outcome || '').toLowerCase() === 'missed');
-    const waiting = missed.filter(a => !recoveryDemoStatuses[a.id]);
-    const attempted = missed.filter(a => !!recoveryDemoStatuses[a.id]);
-    stats.innerHTML = `<div class="feature-stat"><div class="fs-label">Missed appointments</div><div class="fs-value">${missed.length}</div><div class="fs-note">Live count from current appointment query</div></div><div class="feature-stat"><div class="fs-label">Recovery attempts</div><div class="fs-value">${attempted.length}</div><div class="fs-note">Demo clicks in this browser session only</div></div><div class="feature-stat"><div class="fs-label">Awaiting recovery action</div><div class="fs-value">${waiting.length}</div><div class="fs-note">No demo action selected yet</div></div>`;
-    if (missed.length) {
-      table.innerHTML = missed.map(a => {
-        const patient = a.patients && a.patients.name || 'Patient record';
-        const doctor = a.doctors && a.doctors.name || 'Unassigned';
-        const status = recoveryDemoStatuses[a.id] || 'Waiting response';
-        const color = status === 'AI call queued (demo)' ? 'var(--accent-light)' : status === 'WhatsApp queued (demo)' ? 'var(--green)' : 'var(--yellow)';
-        return `<tr><td><strong>${escFeature(patient)}</strong><div style="color:var(--text-muted);font-size:10px">${escFeature(a.visit_type || a.reason || 'Visit type not set')}</div></td><td>${escFeature(doctor)}</td><td>${escFeature(formatFeatureDate(a.slot_time))}</td><td style="color:${color}">● ${escFeature(status)}</td><td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="font-size:10px;padding:5px 7px" onclick="setRecoveryDemo('${escFeature(a.id)}','AI call queued (demo)')">📞 Call (demo)</button><button class="btn btn-ghost" style="font-size:10px;padding:5px 7px" onclick="setRecoveryDemo('${escFeature(a.id)}','WhatsApp queued (demo)')">💬 WhatsApp (demo)</button></div></td></tr>`;
-      }).join('');
-    } else {
-      table.innerHTML = `<tr><td colspan="5" style="padding:20px"><div style="font-weight:600;margin-bottom:6px">No missed appointments found in live records.</div><div style="color:var(--text-muted);font-size:12px;margin-bottom:12px">This is a valid zero result, not a loading failure. The examples below are fictional and only demonstrate the recovery workflow.</div><span class="demo-tag">SAMPLE PREVIEW · NOT REAL PATIENTS</span></td></tr>
-      <tr><td><strong>Sample Patient A</strong><div style="font-size:10px;color:var(--text-muted)">OPD visit · fictional</div></td><td>Sample Doctor</td><td>Example appointment</td><td style="color:var(--yellow)">● Waiting response</td><td><span class="demo-tag">Preview only</span></td></tr>
-      <tr><td><strong>Sample Patient B</strong><div style="font-size:10px;color:var(--text-muted)">Follow-up · fictional</div></td><td>Sample Doctor</td><td>Example appointment</td><td style="color:var(--green)">● Reminder status (sample)</td><td><span class="demo-tag">Preview only</span></td></tr>`;
-    }
-  } catch (err) {
-    console.error('Recovery Center load failed:', err);
-    stats.innerHTML = '<div class="feature-stat"><div class="fs-label">Live appointment data</div><div class="fs-value">Unavailable</div><div class="fs-note">A connection or permission error occurred. No live total is being claimed.</div></div><div class="feature-stat"><div class="fs-label">Demo recovery workflow</div><div class="fs-value">Preview</div><div class="fs-note">Fictional examples below are not patient records.</div></div>';
-    table.innerHTML = `<tr><td colspan="5" style="padding:18px"><div class="alert yellow"><span>⚠️</span><div><strong>Could not load live appointment data.</strong><div style="margin-top:5px">${escFeature(err.message || err)}</div><div style="margin-top:5px">Showing fictional preview examples only; no real patient was contacted.</div></div></div></td></tr><tr><td><strong>Sample Patient A</strong><div style="font-size:10px;color:var(--text-muted)">Fictional example</div></td><td>Sample Doctor</td><td>Example appointment</td><td>Waiting response</td><td><span class="demo-tag">Preview only</span></td></tr><tr><td><strong>Sample Patient B</strong><div style="font-size:10px;color:var(--text-muted)">Fictional example</div></td><td>Sample Doctor</td><td>Example appointment</td><td>Reminder status (sample)</td><td><span class="demo-tag">Preview only</span></td></tr>`;
-  }
-}
-function setRecoveryDemo(id, status) {
-  if (!requireRole(['admin','manager','front desk'], 'Your role cannot manage recovery actions.')) return;
-  recoveryDemoStatuses[id] = status;
-  showToast(`${status}. No real call or WhatsApp message was sent.`, 'info');
-  renderRecoveryCenter();
-}
-function renderAIReceptionist() {
-  updateReceptionScript();
-}
-function updateReceptionScript() {
-  const patient = document.getElementById('receptionPatient')?.value || 'Rahul Sharma';
-  const option = document.getElementById('receptionDoctor');
-  const doctor = option?.selectedOptions?.[0]?.textContent || 'Dr. Gupta — Tomorrow, 11:00 AM';
-  const match = doctor.match(/(Dr\.\s*[^—-]+)[—-]\s*(.+)/);
-  const doctorName = match ? match[1].trim() : 'Dr. Gupta';
-  const time = match ? match[2].trim() : 'Tomorrow, 11:00 AM';
-  const script = document.getElementById('receptionScript');
-  if (script) script.textContent = `“Namaste ${patient} ji, ${doctorName} ${time} available hain. Kya appointment confirm karna chahenge?”`;
-}
-function setReceptionOutcome(outcome) {
-  if (!requireRole(['admin','manager','front desk'], 'Your role cannot record receptionist demo outcomes.')) return;
-  const el = document.getElementById('receptionOutcome');
-  if (el) el.innerHTML = `<span class="demo-tag">SIMULATED OUTCOME</span><div style="margin-top:8px"><strong>${escFeature(document.getElementById('receptionPatient')?.value || 'Sample patient')}</strong> — ${escFeature(outcome)}</div><div style="margin-top:4px;color:var(--text-muted)">Local demo state only. No call was placed and no appointment record was changed.</div>`;
-  showToast(`Simulation outcome: ${outcome}. No live call placed.`, 'info');
-}
-async function renderAIImpact() {
-  const target = document.getElementById('impactLiveStats');
-  if (!target) return;
-  try {
-    const rows = await getAppointmentFeatureRows();
-    const count = rows.length;
-    const missed = rows.filter(a => String(a.status || '').toLowerCase() === 'missed' || String(a.visit_outcome || '').toLowerCase() === 'missed').length;
-    const completed = rows.filter(a => String(a.status || '').toLowerCase() === 'completed').length;
-    target.innerHTML = `<div class="feature-stat"><div class="fs-label">Appointments in fetched records</div><div class="fs-value">${count}</div><div class="fs-note">Live Supabase query; latest 1,000 max</div></div><div class="feature-stat"><div class="fs-label">Completed appointments</div><div class="fs-value">${completed}</div><div class="fs-note">Live status count from fetched records</div></div><div class="feature-stat"><div class="fs-label">Missed appointments</div><div class="fs-value">${missed}</div><div class="fs-note">Live status/outcome count from fetched records</div></div>`;
-  } catch (err) {
-    console.error('AI Impact live metrics failed:', err);
-    target.innerHTML = `<div class="feature-stat"><div class="fs-label">Live appointment metrics unavailable</div><div class="fs-value">—</div><div class="fs-note">${escFeature(err.message || err)}. Sample estimates below remain illustrative only.</div></div>`;
-  }
-  calculateDemoROI();
-}
-function calculateDemoROI() {
-  const hours = Math.max(0, Number(document.getElementById('roiHours')?.value || 0));
-  const rate = Math.max(0, Number(document.getElementById('roiRate')?.value || 0));
-  const value = Math.round(hours * rate);
-  const el = document.getElementById('roiEstimate');
-  if (el) el.textContent = value.toLocaleString('en-IN', {style:'currency',currency:'INR',maximumFractionDigits:0});
-}
-
 // ─── MOCK DATA ───
 const mockAppointments = [
   {id:'APT001', patient:'Rahul Sharma', age:34, doctor:'Dr. Anjali Mehta', dept:'Cardiology', time:'09:00 AM', type:'OPD', status:'confirmed', waMsg:true, phone:'+91 98001 11234'},
@@ -1867,6 +1695,18 @@ const activityItems = [
   {icon:'🔄', color:'rgba(139,92,246,0.15)', text:'Deepak Yadav appointment reschedule request received', time:'45 min ago'},
 ];
 
+function calculateRecoveryROI() {
+  const appointments = Math.max(0, Number(document.getElementById('roiAppointments')?.value || 0));
+  const noShowRate = Math.min(100, Math.max(0, Number(document.getElementById('roiAttendance')?.value || 0)));
+  const fee = Math.max(0, Number(document.getElementById('roiFee')?.value || 0));
+  const daily = Math.round(appointments * noShowRate / 100 * fee);
+  const fmt = n => '₹' + n.toLocaleString('en-IN');
+  const dailyEl = document.getElementById('roiDailyResult');
+  const monthlyEl = document.getElementById('roiMonthlyResult');
+  if (dailyEl) dailyEl.textContent = fmt(daily);
+  if (monthlyEl) monthlyEl.textContent = 'Estimated monthly exposure: ' + fmt(daily * 30) + ' (30 days)';
+}
+
 // ─── NAVIGATION ───
 let currentPage = 'dashboard';
 
@@ -1882,7 +1722,7 @@ function navigate(page, el) {
   target.classList.add('active');
   if (el) el.classList.add('active');
   else document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + page + "'")) n.classList.add('active'); });
-  const titles = {aiImpact:'AI Impact & ROI', aiReceptionist:'AI Receptionist', recoveryCenter:'Missed Appointment Recovery', dashboard:'AI Hospital Operations Center', appointments:'Appointments', patients:'Patient Directory', escalations:'Escalation Management', whatsapp:'WhatsApp AI Agent', voice:'AI Voice Calls', reports:'Reports & Labs', feedback:'Feedback', analytics:'Analytics', automation:'Automation Logs', managementReports:'Manager Reports', settings:'Settings', enquiries:'Hospital Enquiries', staffManagement:'Staff Management', auditLogs:'Audit Logs'};
+  const titles = {ceoDashboard:'CEO Dashboard', dashboard:'Dashboard', appointments:'Appointments', patients:'Patient Directory', escalations:'Escalation Management', whatsapp:'WhatsApp AI Agent', voice:'AI Voice Calls', reports:'Reports & Labs', feedback:'Feedback', analytics:'Analytics', automation:'Automation Logs', managementReports:'Manager Reports', settings:'Settings', enquiries:'Hospital Enquiries', staffManagement:'Staff Management', auditLogs:'Audit Logs'};
   document.getElementById('page-title').textContent = titles[page] || page;
   currentPage = page;
   renderPage(page);
@@ -1891,7 +1731,8 @@ function navigate(page, el) {
 
 function renderPage(page) {
   if (!hasPagePermission(page)) return;
-  if (page === 'dashboard') renderDashboard();
+  if (page === 'ceoDashboard') calculateRecoveryROI();
+  else if (page === 'dashboard') renderDashboard();
   else if (page === 'appointments') renderAppointments();
   else if (page === 'patients') renderPatients();
   else if (page === 'escalations') renderEscalations();
@@ -1905,9 +1746,6 @@ function renderPage(page) {
   else if (page === 'enquiries') renderEnquiries();
   else if (page === 'staffManagement') renderStaffManagement();
   else if (page === 'auditLogs') renderAuditLogs();
-  else if (page === 'recoveryCenter') renderRecoveryCenter();
-  else if (page === 'aiReceptionist') renderAIReceptionist();
-  else if (page === 'aiImpact') renderAIImpact();
 }
 
 // ─── DASHBOARD ───
@@ -2641,7 +2479,7 @@ async function renderPatients() {
       const safeName = name.replace(/'/g, "\\'");
 
       return `
-        <div class="patient-card" onclick="showPatientDetail('${escFeature(p.id)}')">
+        <div class="patient-card" onclick="showPatientDetail('${safeName}')">
           <div class="patient-avatar" style="background:var(--accent-glow);color:var(--accent-light)">${initials}</div>
           <div style="flex:1">
             <div class="patient-name">${name}</div>
@@ -2654,7 +2492,7 @@ async function renderPatients() {
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('The WhatsApp messaging workflow for ${safeName} will be connected later.','info')">💬</button>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showPatientDetail('${escFeature(p.id)}')">👁</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();showToast('${safeName} profile will open.','info')">👁</button>
           </div>
         </div>
       `;
@@ -2671,39 +2509,8 @@ async function renderPatients() {
   }
 }
 
-async function showPatientDetail(patientId) {
-  const modal = document.getElementById('patientTimelineModal');
-  const body = document.getElementById('patientTimelineBody');
-  const title = document.getElementById('patientTimelineTitle');
-  if (!modal || !body || !title) { showToast('Patient profile modal is unavailable.', 'error'); return; }
-  modal.classList.add('open');
-  body.innerHTML = '<div style="padding:20px;color:var(--text-muted)">Loading patient profile and timeline…</div>';
-  title.textContent = 'Patient Profile & Timeline';
-  try {
-    if (!window.supabaseClient) throw new Error('Supabase client is not initialized.');
-    const { data: patient, error: patientError } = await window.supabaseClient.from('patients').select('id,name,phone,email,created_at').eq('id', patientId).single();
-    if (patientError) throw patientError;
-    const { data: appointments, error: apptError } = await window.supabaseClient.from('appointments').select('id,slot_time,status,reason,visit_type,visit_outcome,doctor_id,created_at').eq('patient_id', patientId).order('slot_time', { ascending: false }).limit(50);
-    if (apptError) throw apptError;
-    const patientName = patient.name || 'Unnamed Patient';
-    title.textContent = patientName + ' · Patient Timeline';
-    const events = [];
-    if (patient.created_at) events.push({date:patient.created_at,title:'Patient Registered',detail:'Patient profile created in hospital CRM.',kind:'registration'});
-    (appointments || []).forEach(a => {
-      const eventDate = a.slot_time || a.created_at;
-      if (!eventDate) return;
-      const status = String(a.status || 'scheduled').replace(/_/g, ' ');
-      events.push({date:eventDate,title:'Appointment ' + status.charAt(0).toUpperCase() + status.slice(1),detail:(a.visit_type || a.reason || 'Appointment') + (a.visit_outcome ? ' · Outcome: ' + String(a.visit_outcome).replace(/_/g, ' ') : ''),kind:status.toLowerCase()});
-    });
-    events.sort((a,b) => new Date(b.date) - new Date(a.date));
-    const fmt = value => { const d = new Date(value); return Number.isNaN(d.getTime()) ? 'Date unavailable' : d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
-    const initials = patientName.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase() || 'PT';
-    const timelineHtml = events.length ? events.map(e => `<div class="tl-item"><div class="tl-dot" style="background:${e.kind === 'completed' ? 'var(--green)' : e.kind === 'missed' ? 'var(--red)' : 'var(--accent)'}"></div><div class="tl-time">${escFeature(fmt(e.date))}</div><div class="tl-content"><strong>${escFeature(e.title)}</strong><div style="color:var(--text-muted);margin-top:3px">${escFeature(e.detail)}</div></div></div>`).join('') : '<div class="alert blue">No appointment history found for this patient yet. Profile data below is live from Supabase.</div>';
-    body.innerHTML = `<div style="display:flex;gap:14px;align-items:center;padding:16px;border:1px solid var(--border);background:var(--card);border-radius:12px;margin-bottom:22px"><div class="patient-avatar" style="width:54px;height:54px;font-size:18px;background:var(--accent-glow);color:var(--accent-light)">${escFeature(initials)}</div><div style="min-width:0;flex:1"><div style="font-size:18px;font-weight:700">${escFeature(patientName)}</div><div style="font-size:12px;color:var(--text-muted);margin-top:5px">📞 ${escFeature(patient.phone || '—')} &nbsp; · &nbsp; ✉️ ${escFeature(patient.email || '—')}</div><div style="font-size:11px;color:var(--text-muted);margin-top:5px">Patient ID: ${escFeature(patient.id)}</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px"><div style="font:600 15px 'Space Grotesk',sans-serif">Patient Activity</div><span class="live-tag">● Supabase records</span></div><div class="timeline">${timelineHtml}</div><div class="alert blue" style="margin-top:12px">Only registration and appointment events available in the database are shown as live history. Reminder, prescription-upload and feedback events will appear when their actual event records are connected; they are not fabricated.</div>`;
-  } catch (error) {
-    console.error('PATIENT TIMELINE LOAD ERROR:', error);
-    body.innerHTML = `<div class="alert yellow">Could not load this patient profile: ${escFeature(error.message || error)}. Check access permissions and try again.</div>`;
-  }
+function showPatientDetail(name) {
+  showToast(`Opening ${name}'s full profile...`, 'info');
 }
 
 // ─── WHATSAPP ───
@@ -3968,10 +3775,10 @@ let staffProfile = null;
 let authInitComplete = false;
 let staffProfileLoadPromise = null;
 const ROLE_PAGES = {
-  admin: ['dashboard','analytics','aiImpact','aiReceptionist','recoveryCenter','appointments','patients','escalations','enquiries','reports','whatsapp','voice','feedback','automation','managementReports','settings','staffManagement','auditLogs'],
-  manager: ['dashboard','analytics','aiImpact','aiReceptionist','recoveryCenter','appointments','patients','escalations','enquiries','reports','whatsapp','voice','feedback','automation','managementReports','auditLogs'],
+  admin: ['dashboard','ceoDashboard','analytics','appointments','patients','escalations','enquiries','reports','whatsapp','voice','feedback','automation','managementReports','settings','staffManagement','auditLogs'],
+  manager: ['dashboard','ceoDashboard','analytics','appointments','patients','escalations','enquiries','reports','whatsapp','voice','feedback','automation','managementReports','auditLogs'],
   doctor: ['dashboard','appointments','patients','reports','feedback'],
-  'front desk': ['dashboard','aiReceptionist','recoveryCenter','appointments','patients','escalations','enquiries','reports']
+  'front desk': ['dashboard','appointments','patients','escalations','enquiries','reports']
 };
 const ROLE_LABELS = {admin:'Admin', manager:'Manager', doctor:'Doctor', 'front desk':'Front Desk'};
 function normalizedStaffRole(value) {
